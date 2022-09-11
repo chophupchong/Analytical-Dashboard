@@ -1,5 +1,12 @@
 # chc-app
 
+Social Media Analytical Dashboard
+
+## Technologies Used
+
+1. VueJS 3
+2. Firebase
+
 ## Create your environment file
 
 Retrieve your credentials from firebase
