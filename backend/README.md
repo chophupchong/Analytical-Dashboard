@@ -9,13 +9,12 @@ Retrieve your service account key from Firebase console
 3. Under Firebase Admin SDK, generate new private key
 
 **NOTE**
-Do not expose your serviceAccountKey.json
 
-**Safeguard Methods**
+## Do not expose your serviceAccountKey.json
 
-1. Create a new private repo
-2. Dump your json file
-3. link it back to here by using its raw data link
+I have created a service account key json sample.
+After generating your private key, it should be a json file.
+Paste and rename the json file to "serviceAccountKey.json"
 
 run
 
