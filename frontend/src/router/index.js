@@ -9,7 +9,12 @@ const routes = [
   {
     path: '/',
     name: 'Dashboard',
-    component: () => import('@/views/dashboard'),
+    component: () => import('@/views/dashboard/index.vue'),
+  },
+  {
+    path: '/youTube',
+    name: 'youTube',
+    component: () => import('@/views/dashboard/youTube.vue'),
   },
 ];
 
