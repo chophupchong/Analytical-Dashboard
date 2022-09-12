@@ -6,8 +6,14 @@ Social Media Analytical Dashboard
 
 1. VueJS 3
 2. Firebase
+3. Flask
+4. FastAPI
+5. Python
+6. Javascript
 
 ## Getting Started
+
+Open up two VSCs and cd into respective directories to run.
 
 ### Create your environment file
 
@@ -29,3 +35,18 @@ MEASUREMENT_ID="VUE_APP_XXX"
 ## to-dos
 
 integrate firestore into frontend
+
+## Research
+
+Switching flask to fastapi
+
+https://medium.com/@calebkaiser/why-we-switched-from-flask-to-fastapi-for-production-machine-learning-765aab9b3679
+
+tldr :
+
+1. flask has no native async support
+2. FastAPI outperforms Flask by 300&
+
+framework and machine learning with fastapi
+
+https://medium.com/@8B_EC/tutorial-serving-machine-learning-models-with-fastapi-in-python-c1a27319c459
