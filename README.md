@@ -5,7 +5,7 @@ Social Media Analytical Dashboard
 ## Technologies Used
 
 1. VueJS 3
-2. Firebase
+2. Firebase (Auth , Realtime Database)
 3. FastAPI
 4. Python
 5. Javascript
