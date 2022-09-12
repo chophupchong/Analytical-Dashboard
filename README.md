@@ -6,10 +6,9 @@ Social Media Analytical Dashboard
 
 1. VueJS 3
 2. Firebase
-3. Flask
-4. FastAPI
-5. Python
-6. Javascript
+3. FastAPI
+4. Python
+5. Javascript
 
 ## Getting Started
 
