@@ -7,9 +7,13 @@ Social Media Analytical Dashboard
 1. VueJS 3
 2. Firebase
 
-## Create your environment file
+## Getting Started
 
-Retrieve your credentials from firebase
+### Create your environment file
+
+1. cd into /frontend
+2. Retrieve your credentials from firebase
+3. Create .env file in frontend and input your following credentials
 
 ```bash
 FIREBASE_API_KEY="VUE_APP_XXX"
@@ -22,30 +26,6 @@ APP_ID="VUE_APP_XXX"
 MEASUREMENT_ID="VUE_APP_XXX"
 ```
 
-## Project setup
+## to-dos
 
-```
-npm install
-```
-
-### Compiles and hot-reloads for development
-
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-
-```
-npm run build
-```
-
-### Lints and fixes files
-
-```
-npm run lint
-```
-
-### Customize configuration
-
-See [Configuration Reference](https://cli.vuejs.org/config/).
+integrate firestore into frontend
