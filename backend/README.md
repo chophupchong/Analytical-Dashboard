@@ -23,6 +23,10 @@ run
 pip install -r requirements.txt
 
 uvicorn main:app --reload
+
+alternate commands:
+pip install --user -r requirements.txt
+python -m uvicorn main:app --reload
 ```
 
 ## See API documentation
