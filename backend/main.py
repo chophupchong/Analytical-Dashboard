@@ -85,13 +85,30 @@ class Authorpriceinfo(BaseModel):
     price: int
     #tax: Optional[float] = None
 
-#example post request that will update the firebase db
+#example put request that will update the firebase db
 #u can verify the changes by using the get "/" request
-@app.post("/author_price/")
-async def author_price(authorpriceinfo: Authorpriceinfo):
+#just as a note, put is for UPDATE, post is for CREATE
+@app.post("/author_price/{author_name}")
+async def author_price(author_name: str, price: int):
     ref = db.reference("/Books/Best_Sellers/")
     best_sellers = ref.get()
     for key, value in best_sellers.items():
-        if (value["Author"] == authorpriceinfo.name):
-            ref.child(key).update({"Price":authorpriceinfo.price})
-    return authorpriceinfo
+        if (value["Author"] == author_name):
+            ref.child(key).update({"Price":price})
+    return author_name + "'s book(s) set to $" +str(price)
+
+# class Authorpriceinfo(BaseModel):
+#     name: str
+#     #description: Optional[str] = None
+#     price: int
+#     #tax: Optional[float] = None
+    
+#commented out code but this is the same put example except using post which is not the correct convention
+# @app.post("/author_price/")
+# async def author_price(authorpriceinfo: Authorpriceinfo):
+#     ref = db.reference("/Books/Best_Sellers/")
+#     best_sellers = ref.get()
+#     for key, value in best_sellers.items():
+#         if (value["Author"] == authorpriceinfo.name):
+#             ref.child(key).update({"Price":authorpriceinfo.price})
+#     return authorpriceinfo
