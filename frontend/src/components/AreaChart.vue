@@ -6,18 +6,18 @@
 
 <script>
 import Chart from 'chart.js'
-import planetChartData from '../areadata.js'
+import areaChartData from '../areadata.js'
 
 export default {
   name: 'AreaChart',
   data() {
     return {
-      planetChartData: planetChartData
+      areaChartData: areaChartData
     }
   },
   mounted() {
-    const ctx = document.getElementById('planet-chart');
-    new Chart(ctx, this.planetChartData);
+    const ctx = document.getElementById('area-chart');
+    new Chart(ctx, this.areaChartData);
   }
 }
 </script>

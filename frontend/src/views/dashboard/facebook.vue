@@ -1,5 +1,8 @@
 <template>
-  <AreaChart />
+    <div id="app">
+        <AreaChart/>
+    </div>
+  
 </template>
 
 <script>
