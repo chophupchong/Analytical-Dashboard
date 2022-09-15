@@ -7,7 +7,6 @@
     <router-link class="routerlink" to="/">Facebook</router-link>
     <router-link class="routerlink" to="/youtube">Youtube</router-link>
     <router-link class="routerlink" to="/">Instagram</router-link>
-    <router-link class="routerlink" to="/">Tiktok</router-link>
 
     <div id="container">
     <router-link class="routerlink" to="/login">Settings</router-link>

@@ -12,6 +12,16 @@ const routes = [
     component: () => import('@/views/dashboard/index.vue'),
   },
   {
+    path: '/facebook',
+    name: 'facebook',
+    component: () => import('@/views/dashboard/facebook.vue'),
+  },
+  {
+    path: '/instagram',
+    name: 'instagram',
+    component: () => import('@/views/dashboard/instagram.vue'),
+  },
+  {
     path: '/youTube',
     name: 'youTube',
     component: () => import('@/views/dashboard/youTube.vue'),
