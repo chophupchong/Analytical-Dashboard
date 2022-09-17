@@ -73,7 +73,7 @@ async def getBasicMetrics(startDate: str, endDate: str):
 
 @router.post("/database/basic-metrics")
 async def storeBasicMetrics(num_months: int):
-    """ Initialising basic metrics to past 3 months """
+    """ Storing basic metrics for x number of months """
     try:
         endDate = datetime.today().strftime('%Y-%m-%d')
         startDate = (datetime.today() + relativedelta(months=-num_months)
