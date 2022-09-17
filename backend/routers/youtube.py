@@ -17,7 +17,7 @@ default_app = firebase_admin.initialize_app(cred, {
     'databaseURL': "https://capstone-7caf6-default-rtdb.firebaseio.com/"
 })
 
-f = open('./youtubeAccessTokens.json')
+f = open('./youtubeAccessToken.json')
 tokenData = json.load(f)
 accessToken = tokenData['token']
 refreshToken = tokenData['refresh_token']
@@ -55,7 +55,7 @@ def execute_api_request(client_library_function, **kwargs):
 
 
 @router.get("/youtube/basic-metrics-by-channel")
-async def getMetricsByChannel(startDate: str, endDate: str, metrics: str, sort: str):
+async def getMetricsByChannel(startDate: str, endDate: str, metrics: str, sort: str | None=None):
     """ Aggregated metrics for owner's claimed content (dimension set as channel) """
     try:
         response = execute_api_request(
@@ -64,17 +64,26 @@ async def getMetricsByChannel(startDate: str, endDate: str, metrics: str, sort: 
             startDate=startDate,
             endDate=endDate,
             metrics=metrics,
-            dimensions="channel",
+            dimensions='channel',
             sort= sort
             )
-        return response
+        
+        #Transformation of data
+        queried_data = response['rows'][0][1:]
+        dataset = {}
+        metric_fields = metrics.split(",")
+        index = 0
+        for metrics in metric_fields:
+            dataset[metrics] = queried_data[index]
+            index+=1
+        return dataset
 
     except Exception as err:
         raise err
-        
+
 @router.get("/youtube/basic-metrics-by-day")
 async def getMetricsByDay(startDate: str, endDate: str, metrics: str):
-    """ Aggregated metrics for owner's claimed content (dimension set as channel) """
+    """ Aggregated metrics for owner's claimed content (dimension set as day) """
     try:
         response = execute_api_request(
             youtubeAnalytics.reports().query,
@@ -82,17 +91,17 @@ async def getMetricsByDay(startDate: str, endDate: str, metrics: str):
             startDate=startDate,
             endDate=endDate,
             metrics=metrics,
-            dimensions="day",
+            dimensions='day',
             sort="day"
             )
-        return response
+        return response["rows"]
 
     except Exception as err:
         raise err
 
 @router.get("/youtube/basic-metrics-by-month")
 async def getMetricsByMonth(startDate: str, endDate: str, metrics: str):
-    """ Aggregated metrics for owner's claimed content (dimension set as channel) """
+    """ Aggregated metrics for owner's claimed content (dimension set as month) """
     try:
         response = execute_api_request(
             youtubeAnalytics.reports().query,
@@ -100,8 +109,8 @@ async def getMetricsByMonth(startDate: str, endDate: str, metrics: str):
             startDate=startDate,
             endDate=endDate,
             metrics=metrics,
-            dimensions= "month",
-            sort="month"
+            dimensions= 'month',
+            sort='month'
             )
         return response
 
