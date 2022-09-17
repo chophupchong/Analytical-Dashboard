@@ -26,6 +26,7 @@ http://localhost:8000/docs
 
 ## to-dos
 
+1. Access Tokens to be retrieved from the frontend to call the functions
 Storing credentials in json file
 
 ## References

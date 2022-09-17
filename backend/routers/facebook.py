@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from firebase_admin import db
 
 # Additional imports
 import json
