@@ -48,11 +48,12 @@ def execute_api_request(client_library_function, **kwargs):
     return client_library_function(**kwargs).execute()
 
 
-# Youtube Calls
+# Youtube Calls Dev purposes
 
 @router.get("/youtube/basic-metrics")
 async def getBasicMetrics(startDate: str, endDate: str):
     """ Aggregated metrics for owner's claimed content """
+    """ Testing Functions inputs """
     try:
         response = execute_api_request(
             youtubeAnalytics.reports().query,
@@ -62,6 +63,7 @@ async def getBasicMetrics(startDate: str, endDate: str):
             metrics='views,comments,likes,dislikes,estimatedMinutesWatched,averageViewDuration',
             dimensions='day',
             sort='day')
+
         return response
     except Exception as err:
         raise err
@@ -70,16 +72,35 @@ async def getBasicMetrics(startDate: str, endDate: str):
 
 
 @router.post("/database/basic-metrics")
-async def initialiseBasicMetrics():
+async def storeBasicMetrics(num_months: int):
     """ Initialising basic metrics to past 3 months """
     try:
         endDate = datetime.today().strftime('%Y-%m-%d')
-        startDate = datetime.today() + relativedelta(months=-3)
-        response = getBasicMetrics(startDate, endDate)
-        d = response.json()
-        for row in d['rows']:
+        startDate = (datetime.today() + relativedelta(months=-num_months)
+                     ).strftime('%Y-%m-%d')
+        response = execute_api_request(
+            youtubeAnalytics.reports().query,
+            ids='channel==MINE',
+            startDate=startDate,
+            endDate=endDate,
+            metrics='views,comments,likes,dislikes,estimatedMinutesWatched,averageViewDuration',
+            dimensions='day',
+            sort='day')
 
-            ref.set()
+        ref = db.reference("/youtube/basic_metrics")
+
+        print(response['rows'][0][0])
+        for i in response['rows']:
+            ref.child(i[0]).set({
+                "views": i[1],
+                "comments": i[2],
+                "likes": i[3],
+                "dislikes": i[4],
+                "estimatedMinutesWatched": i[5],
+                "averageViewDuration": i[6]
+            })
+        return response
+
     except Exception as err:
         raise err
 
