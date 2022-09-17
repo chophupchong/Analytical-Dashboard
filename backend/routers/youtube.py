@@ -68,10 +68,10 @@ async def getBasicMetrics(startDate: str, endDate: str):
     except Exception as err:
         raise err
 
-# Database Calls
+# ETL Calls
 
 
-@router.post("/database/basic-metrics")
+@router.post("/youtube/basic-metrics")
 async def storeBasicMetrics(num_months: int):
     """ Storing basic metrics for x number of months """
     try:
@@ -89,7 +89,7 @@ async def storeBasicMetrics(num_months: int):
 
         ref = db.reference("/youtube/basic_metrics")
 
-        print(response['rows'][0][0])
+        # print(response['rows'][0][0])
         for i in response['rows']:
             ref.child(i[0]).set({
                 "views": i[1],
@@ -101,6 +101,16 @@ async def storeBasicMetrics(num_months: int):
             })
         return response
 
+    except Exception as err:
+        raise err
+
+
+@router.get("/youtube/basic-metrics/views")
+async def get_views(date: str):
+    """ Get views by date """
+    try:
+        ref = db.reference("/youtube/basic_metrics/" + date + "/views")
+        return ref.get()
     except Exception as err:
         raise err
 
