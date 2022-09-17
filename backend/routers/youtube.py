@@ -54,9 +54,9 @@ def execute_api_request(client_library_function, **kwargs):
     return client_library_function(**kwargs).execute()
 
 
-@router.get("/youtube/basic-metrics")
-async def getBasicMetrics(startDate: str, endDate: str, dimensions: str, metrics: str, sort: str):
-    """ Aggregated metrics for owner's claimed content """
+@router.get("/youtube/basic-metrics-by-channel")
+async def getMetricsByChannel(startDate: str, endDate: str, metrics: str, sort: str):
+    """ Aggregated metrics for owner's claimed content (dimension set as channel) """
     try:
         response = execute_api_request(
             youtubeAnalytics.reports().query,
@@ -64,13 +64,50 @@ async def getBasicMetrics(startDate: str, endDate: str, dimensions: str, metrics
             startDate=startDate,
             endDate=endDate,
             metrics=metrics,
-            dimensions=dimensions,
-            sort=sort
+            dimensions="channel",
+            sort= sort
             )
         return response
+
     except Exception as err:
         raise err
         
+@router.get("/youtube/basic-metrics-by-day")
+async def getMetricsByDay(startDate: str, endDate: str, metrics: str):
+    """ Aggregated metrics for owner's claimed content (dimension set as channel) """
+    try:
+        response = execute_api_request(
+            youtubeAnalytics.reports().query,
+            ids='channel==MINE',
+            startDate=startDate,
+            endDate=endDate,
+            metrics=metrics,
+            dimensions="day",
+            sort="day"
+            )
+        return response
+
+    except Exception as err:
+        raise err
+
+@router.get("/youtube/basic-metrics-by-month")
+async def getMetricsByMonth(startDate: str, endDate: str, metrics: str):
+    """ Aggregated metrics for owner's claimed content (dimension set as channel) """
+    try:
+        response = execute_api_request(
+            youtubeAnalytics.reports().query,
+            ids='channel==MINE',
+            startDate=startDate,
+            endDate=endDate,
+            metrics=metrics,
+            dimensions= "month",
+            sort="month"
+            )
+        return response
+
+    except Exception as err:
+        raise err
+
 @router.post("/youtube/storeReachMetrics")
 async def storeChannelReachMetrics(reachMetrics: ReachMetrics):
     ref = db.reference("/Youtube/Reach")
