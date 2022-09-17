@@ -1,9 +1,7 @@
-import samplecode
-import api.instagramapi
 from fastapi import FastAPI, Depends
-import api.samplefacebookapi
+from routers import youtube  # , facebook, instagram
 
 app = FastAPI()
-samplecode.sample(app)
-api.samplefacebookapi.sample(app)
-api.instagramapi.sample(app)
+app.include_router(youtube.router)
+# app.include_router(facebook.router)
+# app.include_router(instagram.router)
