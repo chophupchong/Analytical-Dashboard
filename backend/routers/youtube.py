@@ -203,11 +203,11 @@ async def get_channel_views():
     except Exception as err:
         raise err
 
-@router.get("/youtube/basic_channel_metrics/views")
+@router.get("/youtube/basic_channel_metrics/likes")
 async def get_channel_likes():
     """ Get get total likes for channel """
     try:
-        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/views")
+        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/likes")
         return ref.get()
     except Exception as err:
         raise err
@@ -221,14 +221,6 @@ async def get_channel_dislikes():
     except Exception as err:
         raise err
 
-@router.get("/youtube/basic_channel_metrics/likes")
-async def get_channel_likes():
-    """ Get total likes for channel """
-    try:
-        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/likes")
-        return ref.get()
-    except Exception as err:
-        raise err
 
 @router.get("/youtube/basic_channel_metrics/comments")
 async def get_channel_comments():
@@ -268,7 +260,7 @@ async def get_channel_estimatedMinutesWatched():
 
 @router.get("/youtube/basic_channel_metrics/averageViewDuration")
 async def get_channel_averageViewDuration():
-    """ Get total estimated minutes watched for channel """
+    """ Get average view duration for channel """
     try:
         ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/averageViewDuration")
         return ref.get()
