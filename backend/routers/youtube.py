@@ -51,7 +51,7 @@ def execute_api_request(client_library_function, **kwargs):
 
 # Youtube Calls Dev purposes
 
-@router.get("/youtube/basic-channel-metrics")
+@router.get("/youtube/basic-metrics-ignore")
 async def getBasicMetrics(startDate: str, endDate: str):
     """ Aggregated metrics for owner's claimed content """
     """ Testing Functions inputs """
