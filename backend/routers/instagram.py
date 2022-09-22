@@ -18,30 +18,39 @@ params['graph_domain'] = 'https://graph.facebook.com'
 params['graph_version'] = 'v14.0'
 params['endpoint_base'] = params['graph_domain'] + \
     '/' + params['graph_version'] + '/'
+# need to dynamically get ig-user-id
 params['instagram_account_id'] = '17841403562665103'
 f = open('./instagramAccessTokens.json')
 data = json.load(f)
 params['access_token'] = data["access_token"]
 
 
-@router.get('/instagram/follower-count')
-async def getFollowerCount():
+@router.post('/instagram/basic-page-metrics')
+async def getBasicPageMetrics():
     url = params['endpoint_base'] + \
         params['instagram_account_id']
     endpointParams = dict()
-    endpointParams['fields'] = 'followers_count'
+    endpointParams['fields'] = 'followers_count, media_count'
     endpointParams['access_token'] = params['access_token']
 
     try:
         data = requests.get(url, endpointParams)
         data_insight = json.loads(data.content)
+
+        ref = db.reference("/instagram/basic-page-metrics")
+
+        ref.child('ig-page').set({
+            "followers_count": data_insight['followers_count'],
+            "media_count": data_insight['media_count'],
+        })
+
         return data_insight
     except requests.HTTPError as e:
         print(f"[!] Exception caught: {e}")
 
 
-@router.get('/instagram/basic-metrics')
-async def getImpressionReach(num_months: int):
+@router.post('/instagram/daily-basic-metrics')
+async def getDailyBasicMetrics(num_months: int):
 
     url = params['endpoint_base'] + \
         params['instagram_account_id'] + '/insights'
@@ -73,7 +82,7 @@ async def getImpressionReach(num_months: int):
                     data_dict[(data_insight['data'][i]['name'])
                               ] += (data_insight['data'][i]['values'])
 
-        ref = db.reference("/instagram/basic-metrics")
+        ref = db.reference("/instagram/daily-basic-metrics")
         for i in range(0, len(list(data_dict.values())[0])):
             d = datetime.strptime(data_dict['reach'][i]['end_time'], "%Y-%m-%dT%H:%M:%S%z").strftime(
                 '%Y-%m-%d')
@@ -87,6 +96,78 @@ async def getImpressionReach(num_months: int):
         return data_insight['data']
     except requests.HTTPError as e:
         print(f"[!] Exception caught: {e}")
+
+### get requests for daily basic metrics (impressions, reach, profile_views, website_clicks) ###
+
+
+@router.get("/instagram/daily-basic-metrics/impressions")
+async def get_impressions(date: str):
+    """ Get impressions by date """
+    try:
+        ref = db.reference(
+            "/instagram/daily-basic-metrics/" + date + "/impressions")
+        return ref.get()
+    except Exception as err:
+        raise err
+
+
+@router.get("/instagram/daily-basic-metrics/reach")
+async def get_reach(date: str):
+    """ Get reach by date """
+    try:
+        ref = db.reference(
+            "/instagram/daily-basic-metrics/" + date + "/reach")
+        return ref.get()
+    except Exception as err:
+        raise err
+
+
+@router.get("/instagram/daily-basic-metrics/profile_views")
+async def get_profile_views(date: str):
+    """ Get profile_views by date """
+    try:
+        ref = db.reference(
+            "/instagram/daily-basic-metrics/" + date + "/profile_views")
+        return ref.get()
+    except Exception as err:
+        raise err
+
+
+@router.get("/instagram/daily-basic-metrics/website_clicks")
+async def get_website_clicks(date: str):
+    """ Get website_clicks by date """
+    try:
+        ref = db.reference(
+            "/instagram/daily-basic-metrics/" + date + "/website_clicks")
+        return ref.get()
+    except Exception as err:
+        raise err
+
+
+### get requests for basic channel metrics ###
+@router.get("/instagram/basic-page-metrics/followers_count")
+async def get_followers_count():
+    """ Get followers_count by date """
+    try:
+        ref = db.reference(
+            "/instagram/basic-page-metrics/" + "ig-page" + "/followers_count")
+        return ref.get()
+    except Exception as err:
+        raise err
+
+
+@router.get("/instagram/basic-page-metrics/media_count")
+async def get_media_count():
+    """ Get media_count by date """
+    try:
+        ref = db.reference(
+            "/instagram/basic-page-metrics/" + "ig-page" + "/media_count")
+        return ref.get()
+    except Exception as err:
+        raise err
+
+
+### get requests for daily basic metrics ###
 
 
 # @router.get('/instagram/basic-metrics')
