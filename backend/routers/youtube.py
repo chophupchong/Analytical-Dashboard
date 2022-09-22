@@ -72,6 +72,81 @@ async def getBasicMetrics(startDate: str, endDate: str):
 
 # ETL Calls
 
+@router.post("/youtube/basic-audience-metrics")
+async def storeAudienceMetrics():
+    """ Storing audience metrics such as viewer percentage based on gender and age group """
+    try:
+        endDate = datetime.today().strftime('%Y-%m-%d')
+        startDate = (datetime.today() + relativedelta(months=-1)
+                     ).strftime('%Y-%m-%d')
+        response = execute_api_request(
+            youtubeAnalytics.reports().query,
+            ids='channel==MINE',
+            startDate=startDate,
+            endDate=endDate,
+            metrics='viewerPercentage',
+            sort="gender,ageGroup",
+            dimensions='ageGroup,gender',
+        )
+
+        ref = db.reference("/youtube/audience_metrics")
+
+        # print(response['rows'][0][0])
+        if response['rows'] != []:
+            for i in response['rows']:
+                if i[1] == "male":
+                    ref.child("last-30-days").child("male").update({
+                    i[0].split("age")[1] : i[2]
+                })
+                elif i[1] == "female":
+                    ref.child("last-30-days").child("female").update({
+                    i[0].split("age")[1] : i[2]
+                    })
+        else:
+            # last 30 days has no viewership for the channel
+            ref.child("last-30-days").child("male").update({
+                "18-24" : 0,   
+                "25-34" : 0,    
+                "35-44" : 0,    
+                "45-54" : 0,    
+                "55-64" : 0,     
+                "65-" : 0,
+            })
+            ref.child("last-30-days").child("female").update({
+                "18-24" : 0,   
+                "25-34" : 0,    
+                "35-44" : 0,    
+                "45-54" : 0,    
+                "55-64" : 0,     
+                "65-" : 0,
+            })
+
+        responseForLifetime = execute_api_request(
+            youtubeAnalytics.reports().query,
+            ids='channel==MINE',
+            startDate="2015-01-01",
+            endDate=endDate,
+            metrics='viewerPercentage',
+            sort="gender,ageGroup",
+            dimensions='ageGroup,gender',
+        )
+
+        # print(response['rows'][0][0])
+        for i in responseForLifetime['rows']:
+            if i[1] == "male":
+                ref.child("lifetime").child("male").update({
+                    i[0].split("age")[1] : i[2]
+            })
+            elif i[1] == "female":
+                ref.child("lifetime").child("female").update({
+                    i[0].split("age")[1] : i[2]
+            })
+
+        return response
+
+    except Exception as err:
+        raise err
+
 @router.post("/youtube/basic-channel-metrics")
 async def storeBasicChannelMetrics(num_months: int):
     """ Storing basic metrics by channel for x number of months """
@@ -100,7 +175,7 @@ async def storeBasicChannelMetrics(num_months: int):
 
         # print(response['rows'][0][0])
         for i in response['rows']:
-            ref.child('channel').set({
+            ref.set({
                 "views": i[1],
                 "comments": i[2],
                 "likes": i[3],
@@ -128,7 +203,7 @@ async def storeDailyBasicMetrics(num_months: int):
             ids='channel==MINE',
             startDate=startDate,
             endDate=endDate,
-            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration',
+            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration,subscribersGained, subscribersLost',
             dimensions='day',
             sort='day')
 
@@ -145,14 +220,33 @@ async def storeDailyBasicMetrics(num_months: int):
                 "shares": i[5],
                 "estimatedMinutesWatched": i[6],
                 "averageViewDuration": i[7],
-                "engagement": i[2] + i[3] + i[4] + i[5]
+                "engagement": i[2] + i[3] + i[4] + i[5],
+                "subscriberChange": i[8] - i[9]
             })
         return response
 
     except Exception as err:
         raise err
 
+## get requests for audience metrics ###
+@router.get("/youtube/audience_metrics/last-30-days")
+async def get_viewPercentageFromLast30Days():
+    """ Get view percentage from last 30 days """
+    try:
+        ref = db.reference("/youtube/audience_metrics/last-30-days")
+        return ref.get()
+    except Exception as err:
+        raise err
 
+
+@router.get("/youtube/audience_metrics/lifetime")
+async def get_viewPercentageFromLifetime():
+    """ Get channel lifetime view percentage  """
+    try:
+        ref = db.reference("/youtube/audience_metrics/lifetime")
+        return ref.get()
+    except Exception as err:
+        raise err
 
 ### get requests for daily basic metrics ###
 
@@ -198,7 +292,7 @@ async def get_views(date: str):
 async def get_channel_views():
     """ Get total views for channel """
     try:
-        ref = db.reference("/youtube/daily_basic_metrics/" + "channel" + "/views")
+        ref = db.reference("/youtube/basic_channel_metrics/" + "/views")
         return ref.get()
     except Exception as err:
         raise err
@@ -207,7 +301,7 @@ async def get_channel_views():
 async def get_channel_likes():
     """ Get get total likes for channel """
     try:
-        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/likes")
+        ref = db.reference("/youtube/basic_channel_metrics/" + "/likes")
         return ref.get()
     except Exception as err:
         raise err
@@ -216,7 +310,7 @@ async def get_channel_likes():
 async def get_channel_dislikes():
     """ Get total dislikes for channel """
     try:
-        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/dislikes")
+        ref = db.reference("/youtube/basic_channel_metrics/" + "/dislikes")
         return ref.get()
     except Exception as err:
         raise err
@@ -226,7 +320,7 @@ async def get_channel_dislikes():
 async def get_channel_comments():
     """ Get total comments for channel """
     try:
-        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/comments")
+        ref = db.reference("/youtube/basic_channel_metrics/" + "/comments")
         return ref.get()
     except Exception as err:
         raise err
@@ -235,7 +329,7 @@ async def get_channel_comments():
 async def get_channel_shares():
     """ Get total shares for channel """
     try:
-        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/shares")
+        ref = db.reference("/youtube/basic_channel_metrics/" + "/shares")
         return ref.get()
     except Exception as err:
         raise err
@@ -244,7 +338,7 @@ async def get_channel_shares():
 async def get_channel_engagements():
     """ Get total engagements for channel """
     try:
-        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/engagement")
+        ref = db.reference("/youtube/basic_channel_metrics/" + "/engagement")
         return ref.get()
     except Exception as err:
         raise err
@@ -253,7 +347,7 @@ async def get_channel_engagements():
 async def get_channel_estimatedMinutesWatched():
     """ Get total estimated minutes watched for channel """
     try:
-        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/estimatedMinutesWatched")
+        ref = db.reference("/youtube/basic_channel_metrics/" + "/estimatedMinutesWatched")
         return ref.get()
     except Exception as err:
         raise err
@@ -262,7 +356,7 @@ async def get_channel_estimatedMinutesWatched():
 async def get_channel_averageViewDuration():
     """ Get average view duration for channel """
     try:
-        ref = db.reference("/youtube/basic_channel_metrics/" + "channel" + "/averageViewDuration")
+        ref = db.reference("/youtube/basic_channel_metrics/" + "/averageViewDuration")
         return ref.get()
     except Exception as err:
         raise err
