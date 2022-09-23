@@ -3,6 +3,11 @@ import axios from 'axios';
 const youtubeApi = 'https://localhost:8000/youtube/';
 
 const youtubeService = () => {
+  const postStoreBasicMetrics = async (months) => {
+    const response = await axios.post(youtubeApi, 'storeBasicMetrics/', months);
+    return response.data;
+  };
+
   const getDayViews = async (date) => {
     const response = await axios.get(youtubeApi, 'day/', date, '/views');
     return response.data;
@@ -64,8 +69,16 @@ const youtubeService = () => {
     const response = await axios.get(youtubeApi, 'total/averageViewDuration');
     return response.data;
   };
-
+  const getTotalSubscribers = async () => {
+    const response = await axios.get(youtubeApi, 'total/subscribers');
+    return response.data;
+  };
+  const getTotalSubscriberChange = async () => {
+    const response = await axios.get(youtubeApi, 'total/subscriberChange');
+    return response.data;
+  };
   return {
+    postStoreBasicMetrics,
     getDayViews,
     getDayEngagement,
     getDayEstimatedMinsWatched,
@@ -78,6 +91,8 @@ const youtubeService = () => {
     getTotalEngagement,
     getTotalEstimatedMinutesWatched,
     getTotalAverageViewDuration,
+    getTotalSubscribers,
+    getTotalSubscriberChange,
   };
 };
 
