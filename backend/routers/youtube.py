@@ -292,7 +292,7 @@ async def get_day_views(date: str):
 
 
 @router.get("/youtube/total/views")
-async def get_channel_views():
+async def get_total_views():
     """ Get total views for channel """
     try:
         ref = db.reference("/youtube/total/" + "/views")
@@ -302,7 +302,7 @@ async def get_channel_views():
 
 
 @router.get("/youtube/total/likes")
-async def get_channel_likes():
+async def get_total_likes():
     """ Get get total likes for channel """
     try:
         ref = db.reference("/youtube/total/" + "/likes")
@@ -312,7 +312,7 @@ async def get_channel_likes():
 
 
 @router.get("/youtube/total/dislikes")
-async def get_channel_dislikes():
+async def get_total_dislikes():
     """ Get total dislikes for channel """
     try:
         ref = db.reference("/youtube/total/" + "/dislikes")
@@ -322,7 +322,7 @@ async def get_channel_dislikes():
 
 
 @router.get("/youtube/total/comments")
-async def get_channel_comments():
+async def get_total_comments():
     """ Get total comments for channel """
     try:
         ref = db.reference("/youtube/total/" + "/comments")
@@ -332,7 +332,7 @@ async def get_channel_comments():
 
 
 @router.get("/youtube/total/shares")
-async def get_channel_shares():
+async def get_total_shares():
     """ Get total shares for channel """
     try:
         ref = db.reference("/youtube/total/" + "/shares")
@@ -342,7 +342,7 @@ async def get_channel_shares():
 
 
 @router.get("/youtube/total/engagement")
-async def get_channel_engagements():
+async def get_total_engagements():
     """ Get total engagements for channel """
     try:
         ref = db.reference("/youtube/total/" + "/engagement")
@@ -352,7 +352,7 @@ async def get_channel_engagements():
 
 
 @router.get("/youtube/total/estimatedMinutesWatched")
-async def get_channel_estimatedMinutesWatched():
+async def get_total_estimatedMinutesWatched():
     """ Get total estimated minutes watched for channel """
     try:
         ref = db.reference("/youtube/total/" +
@@ -363,11 +363,22 @@ async def get_channel_estimatedMinutesWatched():
 
 
 @router.get("/youtube/total/averageViewDuration")
-async def get_channel_averageViewDuration():
+async def get_total_averageViewDuration():
     """ Get average view duration for channel """
     try:
         ref = db.reference(
             "/youtube/total/" + "/averageViewDuration")
+        return ref.get()
+    except Exception as err:
+        raise err
+
+
+@router.get("/youtube/total/subscribers")
+async def get_total_subscribers():
+    """ Get average view duration for channel """
+    try:
+        ref = db.reference(
+            "/youtube/total/" + "/subscribers")
         return ref.get()
     except Exception as err:
         raise err
