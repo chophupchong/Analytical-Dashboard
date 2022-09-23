@@ -150,7 +150,7 @@ async def storeAudienceMetrics():
         raise err
 
 
-@router.post("/youtube/storeBasicmetrics")
+@router.post("/youtube/storeBasicMetrics/{num_months}")
 async def storeBasicChannelMetrics(num_months: int):
     """ Storing basic metrics by channel for x number of months """
     try:
