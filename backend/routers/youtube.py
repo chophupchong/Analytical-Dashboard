@@ -150,7 +150,7 @@ async def storeAudienceMetrics():
         raise err
 
 
-@router.post("/youtube/basic-channel-metrics")
+@router.post("/youtube/totalBasicmetrics")
 async def storeBasicChannelMetrics(num_months: int):
     """ Storing basic metrics by channel for x number of months """
     try:
@@ -194,7 +194,7 @@ async def storeBasicChannelMetrics(num_months: int):
         raise err
 
 
-@router.post("/youtube/daily-basic-metrics")
+@router.post("/youtube/dayBasicMetrics")
 async def storeDailyBasicMetrics(num_months: int):
     """ Storing basic metrics for x number of months """
     try:
@@ -210,7 +210,7 @@ async def storeDailyBasicMetrics(num_months: int):
             dimensions='day',
             sort='day')
 
-        ref = db.reference("/youtube/daily")
+        ref = db.reference("/youtube/day")
 
         # print(response['rows'][0][0])
         for i in response['rows']:
