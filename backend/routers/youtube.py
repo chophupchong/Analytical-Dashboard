@@ -73,83 +73,6 @@ async def getBasicMetrics(startDate: str, endDate: str):
 
 # ETL Calls
 
-
-@router.post("/youtube/audience")
-async def storeAudienceMetrics():
-    """ Storing audience metrics such as viewer percentage based on gender and age group """
-    try:
-        endDate = datetime.today().strftime('%Y-%m-%d')
-        startDate = (datetime.today() + relativedelta(months=-1)
-                     ).strftime('%Y-%m-%d')
-        response = execute_api_request(
-            youtubeAnalytics.reports().query,
-            ids='channel==MINE',
-            startDate=startDate,
-            endDate=endDate,
-            metrics='viewerPercentage',
-            sort="gender,ageGroup",
-            dimensions='ageGroup,gender',
-        )
-
-        ref = db.reference("/youtube/audience")
-
-        # print(response['rows'][0][0])
-        if response['rows'] != []:
-            for i in response['rows']:
-                if i[1] == "male":
-                    ref.child("last-30-days").child("male").update({
-                        i[0].split("age")[1]: i[2]
-                    })
-                elif i[1] == "female":
-                    ref.child("last-30-days").child("female").update({
-                        i[0].split("age")[1]: i[2]
-                    })
-        else:
-            # last 30 days has no viewership for the channel
-            ref.child("last-30-days").child("male").update({
-                "18-24": 0,
-                "25-34": 0,
-                "35-44": 0,
-                "45-54": 0,
-                "55-64": 0,
-                "65-": 0,
-            })
-            ref.child("last-30-days").child("female").update({
-                "18-24": 0,
-                "25-34": 0,
-                "35-44": 0,
-                "45-54": 0,
-                "55-64": 0,
-                "65-": 0,
-            })
-
-        responseForLifetime = execute_api_request(
-            youtubeAnalytics.reports().query,
-            ids='channel==MINE',
-            startDate="2015-01-01",
-            endDate=endDate,
-            metrics='viewerPercentage',
-            sort="gender,ageGroup",
-            dimensions='ageGroup,gender',
-        )
-
-        # print(response['rows'][0][0])
-        for i in responseForLifetime['rows']:
-            if i[1] == "male":
-                ref.child("lifetime").child("male").update({
-                    i[0].split("age")[1]: i[2]
-                })
-            elif i[1] == "female":
-                ref.child("lifetime").child("female").update({
-                    i[0].split("age")[1]: i[2]
-                })
-
-        return response
-
-    except Exception as err:
-        raise err
-
-
 @router.post("/youtube/storeBasicmetrics")
 async def storeBasicChannelMetrics(num_months: int):
     """ Storing basic metrics by channel for x number of months """
@@ -216,32 +139,34 @@ async def storeBasicChannelMetrics(num_months: int):
                 "subscriberChange": i[8] - i[9]
             })
 
-        return (responseChannel, responseDay, youtubeDataResponse)
+        responseChannelAudienceMetrics = execute_api_request(
+            youtubeAnalytics.reports().query,
+            ids='channel==MINE',
+            startDate="2015-01-01",
+            endDate=endDate,
+            metrics='viewerPercentage',
+            sort="gender,ageGroup",
+            dimensions='ageGroup,gender',
+        )
+
+        ref = db.reference("/youtube/total")
+
+        # print(response['rows'][0][0])
+        for i in responseChannelAudienceMetrics['rows']:
+            if i[1] == "male":
+                ref.child("maleViewerPercentage").update({
+                    i[0].split("age")[1]: i[2]
+                })
+            elif i[1] == "female":
+                ref.child("femaleViewerPercentage").update({
+                    i[0].split("age")[1]: i[2]
+                })
+
+
+        return (responseChannel, responseDay, youtubeDataResponse, responseChannelAudienceMetrics)
 
     except Exception as err:
         raise err
-
-
-# audience to be edited to follow similar format
-
-# @router.get("/youtube/oneMonth/audience/lastMonth")
-# async def get_viewPercentageFromLast30Days():
-#     """ Get view percentage from last 30 days """
-#     try:
-#         ref = db.reference("/youtube/audience/lastMonth")
-#         return ref.get()
-#     except Exception as err:
-#         raise err
-
-
-# @router.get("/youtube/audience/lifetime")
-# async def get_viewPercentageFromLifetime():
-#     """ Get channel lifetime view percentage  """
-#     try:
-#         ref = db.reference("/youtube/audience/lifetime")
-#         return ref.get()
-#     except Exception as err:
-#         raise err
 
 ### get requests for daily basic metrics ###
 
@@ -290,7 +215,24 @@ async def get_day_views(date: str):
 
 ### get requests for basic channel metrics ###
 
+@router.get("/youtube/total/femaleViewerPercentage")
+async def get_channel_female_view_percentage():
+    """ Get total viewer percentages for female """
+    try:
+        ref = db.reference("/youtube/total/" + "/female")
+        return ref.get()
+    except Exception as err:
+        raise err
 
+@router.get("/youtube/total/maleViewerPercentage")
+async def get_channel_male_view_percentage():
+    """ Get total viewer percentages for male """
+    try:
+        ref = db.reference("/youtube/total/" + "/male")
+        return ref.get()
+    except Exception as err:
+        raise err
+    
 @router.get("/youtube/total/views")
 async def get_channel_views():
     """ Get total views for channel """
