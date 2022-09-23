@@ -165,6 +165,7 @@ async def storeBasicChannelMetrics(num_months: int):
 
 
         return (responseChannel, responseDay, youtubeDataResponse, responseChannelAudienceMetrics)
+        return (responseChannel, responseDay, youtubeDataResponse, responseChannelAudienceMetrics)
 
     except Exception as err:
         raise err
