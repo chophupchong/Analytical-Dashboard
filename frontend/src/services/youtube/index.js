@@ -3,6 +3,11 @@ import axios from 'axios';
 const youtubeApi = 'https://localhost:8000/youtube/';
 
 const youtubeService = () => {
+  const postStoreBasicMetrics = async (months) => {
+    const response = await axios.post(youtubeApi, 'storeBasicMetrics/', months);
+    return response.data;
+  };
+
   const getDayViews = async (date) => {
     const response = await axios.get(youtubeApi, 'day/', date, '/views');
     return response.data;
@@ -73,6 +78,7 @@ const youtubeService = () => {
     return response.data;
   };
   return {
+    postStoreBasicMetrics,
     getDayViews,
     getDayEngagement,
     getDayEstimatedMinsWatched,
