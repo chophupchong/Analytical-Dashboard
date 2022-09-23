@@ -150,20 +150,30 @@ async def storeAudienceMetrics():
         raise err
 
 
-@router.post("/youtube/totalBasicmetrics")
+@router.post("/youtube/storeBasicmetrics")
 async def storeBasicChannelMetrics(num_months: int):
     """ Storing basic metrics by channel for x number of months """
     try:
         endDate = datetime.today().strftime('%Y-%m-%d')
         startDate = (datetime.today() + relativedelta(months=-num_months)
                      ).strftime('%Y-%m-%d')
-        response = execute_api_request(
+        responseChannel = execute_api_request(
             youtubeAnalytics.reports().query,
             ids='channel==MINE',
             startDate=startDate,
             endDate=endDate,
-            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration',
+            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration,subscribersGained,subscribersLost',
             dimensions='channel',
+        )
+
+        responseDay = execute_api_request(
+            youtubeAnalytics.reports().query,
+            ids='channel==MINE',
+            startDate=startDate,
+            endDate=endDate,
+            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration,subscribersGained,subscribersLost',
+            dimensions='day',
+            sort="day"
         )
 
         # reponse is for subscriber count
@@ -176,7 +186,7 @@ async def storeBasicChannelMetrics(num_months: int):
         ref = db.reference("/youtube/total")
 
         # print(response['rows'][0][0])
-        for i in response['rows']:
+        for i in responseChannel['rows']:
             ref.set({
                 "views": i[1],
                 "comments": i[2],
@@ -186,34 +196,13 @@ async def storeBasicChannelMetrics(num_months: int):
                 "estimatedMinutesWatched": i[6],
                 "averageViewDuration": i[7],
                 "engagement": i[2] + i[3] + i[4] + i[5],
-                "subscribers": youtubeDataResponse['items'][0]['statistics']['subscriberCount']
+                "subscribers": youtubeDataResponse['items'][0]['statistics']['subscriberCount'],
+                "subscriberChange": i[8] - i[9]
             })
-        return response
 
-    except Exception as err:
-        raise err
+        ref = db.reference("youtube/day")
 
-
-@router.post("/youtube/dayBasicMetrics")
-async def storeDailyBasicMetrics(num_months: int):
-    """ Storing basic metrics for x number of months """
-    try:
-        endDate = datetime.today().strftime('%Y-%m-%d')
-        startDate = (datetime.today() + relativedelta(months=-num_months)
-                     ).strftime('%Y-%m-%d')
-        response = execute_api_request(
-            youtubeAnalytics.reports().query,
-            ids='channel==MINE',
-            startDate=startDate,
-            endDate=endDate,
-            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration,subscribersGained, subscribersLost',
-            dimensions='day',
-            sort='day')
-
-        ref = db.reference("/youtube/day")
-
-        # print(response['rows'][0][0])
-        for i in response['rows']:
+        for i in responseDay['rows']:
             ref.child(i[0]).set({
                 "views": i[1],
                 "comments": i[2],
@@ -223,34 +212,36 @@ async def storeDailyBasicMetrics(num_months: int):
                 "estimatedMinutesWatched": i[6],
                 "averageViewDuration": i[7],
                 "engagement": i[2] + i[3] + i[4] + i[5],
+                "subscribers": youtubeDataResponse['items'][0]['statistics']['subscriberCount'],
                 "subscriberChange": i[8] - i[9]
             })
-        return response
+
+        return (responseChannel, responseDay, youtubeDataResponse)
 
     except Exception as err:
         raise err
 
-## get requests for audience metrics ###
+
+# audience to be edited to follow similar format
+
+# @router.get("/youtube/oneMonth/audience/lastMonth")
+# async def get_viewPercentageFromLast30Days():
+#     """ Get view percentage from last 30 days """
+#     try:
+#         ref = db.reference("/youtube/audience/lastMonth")
+#         return ref.get()
+#     except Exception as err:
+#         raise err
 
 
-@router.get("/youtube/oneMonth/audience/lastMonth")
-async def get_viewPercentageFromLast30Days():
-    """ Get view percentage from last 30 days """
-    try:
-        ref = db.reference("/youtube/audience/lastMonth")
-        return ref.get()
-    except Exception as err:
-        raise err
-
-
-@router.get("/youtube/audience/lifetime")
-async def get_viewPercentageFromLifetime():
-    """ Get channel lifetime view percentage  """
-    try:
-        ref = db.reference("/youtube/audience/lifetime")
-        return ref.get()
-    except Exception as err:
-        raise err
+# @router.get("/youtube/audience/lifetime")
+# async def get_viewPercentageFromLifetime():
+#     """ Get channel lifetime view percentage  """
+#     try:
+#         ref = db.reference("/youtube/audience/lifetime")
+#         return ref.get()
+#     except Exception as err:
+#         raise err
 
 ### get requests for daily basic metrics ###
 
