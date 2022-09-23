@@ -41,6 +41,29 @@ const youtubeService = () => {
     const response = await axios.get(youtubeApi, 'total/dislikes');
     return response.data;
   };
+  const getTotalComments = async () => {
+    const response = await axios.get(youtubeApi, 'total/comments');
+    return response.data;
+  };
+  const getTotalShares = async () => {
+    const response = await axios.get(youtubeApi, 'total/shares');
+    return response.data;
+  };
+  const getTotalEngagement = async () => {
+    const response = await axios.get(youtubeApi, 'total/engagement');
+    return response.data;
+  };
+  const getTotalEstimatedMinutesWatched = async () => {
+    const response = await axios.get(
+      youtubeApi,
+      'total/estimatedMinutesWatched'
+    );
+    return response.data;
+  };
+  const getTotalAverageViewDuration = async () => {
+    const response = await axios.get(youtubeApi, 'total/averageViewDuration');
+    return response.data;
+  };
 
   return {
     getDayViews,
@@ -50,6 +73,11 @@ const youtubeService = () => {
     getTotalViews,
     getTotalLikes,
     getTotalDislikes,
+    getTotalComments,
+    getTotalShares,
+    getTotalEngagement,
+    getTotalEstimatedMinutesWatched,
+    getTotalAverageViewDuration,
   };
 };
 
