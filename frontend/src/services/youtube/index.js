@@ -64,7 +64,14 @@ const youtubeService = () => {
     const response = await axios.get(youtubeApi, 'total/averageViewDuration');
     return response.data;
   };
-
+  const getTotalSubscribers = async () => {
+    const response = await axios.get(youtubeApi, 'total/subscribers');
+    return response.data;
+  };
+  const getTotalSubscriberChange = async () => {
+    const response = await axios.get(youtubeApi, 'total/subscriberChange');
+    return response.data;
+  };
   return {
     getDayViews,
     getDayEngagement,
@@ -78,6 +85,8 @@ const youtubeService = () => {
     getTotalEngagement,
     getTotalEstimatedMinutesWatched,
     getTotalAverageViewDuration,
+    getTotalSubscribers,
+    getTotalSubscriberChange,
   };
 };
 
