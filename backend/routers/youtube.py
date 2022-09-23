@@ -364,7 +364,7 @@ async def get_total_estimatedMinutesWatched():
 
 @router.get("/youtube/total/averageViewDuration")
 async def get_total_averageViewDuration():
-    """ Get average view duration for channel """
+    """ Get total average view duration for channel """
     try:
         ref = db.reference(
             "/youtube/total/" + "/averageViewDuration")
@@ -375,10 +375,21 @@ async def get_total_averageViewDuration():
 
 @router.get("/youtube/total/subscribers")
 async def get_total_subscribers():
-    """ Get average view duration for channel """
+    """ Get total subscribers for channel """
     try:
         ref = db.reference(
             "/youtube/total/" + "/subscribers")
+        return ref.get()
+    except Exception as err:
+        raise err
+
+
+@router.get("/youtube/total/subscriberChange")
+async def get_total_subscriberChange():
+    """ Get total change in subscribers for channel """
+    try:
+        ref = db.reference(
+            "/youtube/total/" + "/subscriberChange")
         return ref.get()
     except Exception as err:
         raise err
