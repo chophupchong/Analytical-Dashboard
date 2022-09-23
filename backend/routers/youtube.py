@@ -165,7 +165,7 @@ async def storeBasicChannelMetrics(num_months: int):
 
 
         return (responseChannel, responseDay, youtubeDataResponse, responseChannelAudienceMetrics)
-        return (responseChannel, responseDay, youtubeDataResponse, responseChannelAudienceMetrics)
+        
 
     except Exception as err:
         raise err
@@ -234,6 +234,7 @@ async def get_channel_male_view_percentage():
         return ref.get()
     except Exception as err:
         raise err
+        
 @router.get("/youtube/total/views")
 async def get_total_views():
     """ Get total views for channel """
