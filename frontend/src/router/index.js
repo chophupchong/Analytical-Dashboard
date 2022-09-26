@@ -22,10 +22,25 @@ const routes = [
     component: () => import('@/views/dashboard/instagram.vue'),
   },
   {
-    path: '/youTube',
-    name: 'youTube',
-    component: () => import('@/views/dashboard/youTube.vue'),
+    path: '/youtube/Overview',
+    name: 'youtubeOverview',
+    component: () => import('@/views/dashboard/youtube/youtubeOverview.vue')
   },
+  {
+    path: '/youtube/Engagement',
+    name: 'youtubeEngagement',
+    component: () => import('@/views/dashboard/youtube/youtubeEngagement.vue')
+  },
+  {
+    path: '/youtube/Reach',
+    name: 'youtubeReach',
+    component: () => import('@/views/dashboard/youtube/youtubeReach.vue')
+  },
+  {
+    path: '/youtube/AdCampaign',
+    name: 'youtubeAdCampaign',
+    component: () => import('@/views/dashboard/youtube/youtubeAdCampaign.vue')
+  }
 ];
 
 const router = createRouter({
