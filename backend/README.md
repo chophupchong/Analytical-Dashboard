@@ -1,22 +1,13 @@
 ## Getting Started
 
-## Create your .env file again
+## Compile Jsons in backend root folder
 
-Retrieve your service account key from Firebase console
+1. serviceAccountKey.json
+2. youtubeAccessTokens.json
+3. instagramAccessTokens.json
+4. facebookAccessTokens.json
 
-1. Settings
-2. Service accounts
-3. Under Firebase Admin SDK, generate new private key
-
-**NOTE**
-
-## Do not expose your serviceAccountKey.json
-
-I have created a service account key json sample.
-After generating your private key, it should be a json file.
-Paste and rename the json file to "serviceAccountKey.json"
-
-run
+## Run
 
 ```bash
 
@@ -35,8 +26,8 @@ http://localhost:8000/docs
 
 ## to-dos
 
-deployment on deta?
-https://fastapi.tiangolo.com/uk/deployment/deta/
+1. Access Tokens to be retrieved from the frontend to call the functions
+Storing credentials in json file
 
 ## References
 
