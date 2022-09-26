@@ -25,7 +25,7 @@ data = json.load(f)
 params['access_token'] = data["access_token"]
 
 
-@router.post('/instagram/basic-page-metrics')
+@router.put('/instagram/total-follower-media-count')
 async def getBasicPageMetrics():
     url = params['endpoint_base'] + \
         params['instagram_account_id']
@@ -37,11 +37,11 @@ async def getBasicPageMetrics():
         data = requests.get(url, endpointParams)
         data_insight = json.loads(data.content)
 
-        ref = db.reference("/instagram/basic-page-metrics")
+        ref = db.reference("/instagram/basic-metrics")
 
-        ref.child('ig-page').set({
-            "followers_count": data_insight['followers_count'],
-            "media_count": data_insight['media_count'],
+        ref.update({
+            "total_followers_count": data_insight['followers_count'],
+            "total_media_count": data_insight['media_count'],
         })
 
         return data_insight
@@ -49,42 +49,8 @@ async def getBasicPageMetrics():
         print(f"[!] Exception caught: {e}")
 
 
-# (follower_count) metric only supports querying data for the last 30 days excluding the current day
-@router.post('/instagram/daily-follower-count')
-async def getDailyFollowerCount():
-    url = params['endpoint_base'] + \
-        params['instagram_account_id'] + '/insights'
-    endpointParams = dict()
-    endpointParams['metric'] = 'follower_count'
-    endpointParams['period'] = 'day'
-    endpointParams['since'] = ''
-    endpointParams['until'] = ''
-    endpointParams['access_token'] = params['access_token']
-    endDate = datetime.today()
-    startDate = (endDate + relativedelta(days=-30))
-    endpointParams['since'] = startDate.strftime('%Y-%m-%d')
-    endpointParams['until'] = endDate.strftime('%Y-%m-%d')
-    try:
-        data = requests.get(url, endpointParams)
-        data_insight = json.loads(data.content)
-
-        data_dict = dict()
-        data_dict['daily-new-followers'] = data_insight['data'][0]['values']
-
-        ref = db.reference("/instagram/daily-new-followers")
-        for i in range(0, len(list(data_dict.values())[0])):
-            d = datetime.strptime(data_dict['daily-new-followers'][i]['end_time'], "%Y-%m-%dT%H:%M:%S%z").strftime(
-                '%Y-%m-%d')
-            ref.child(d).set({
-                "daily-new-followers": data_dict['daily-new-followers'][i]['value']
-            })
-
-        return data_insight
-    except requests.HTTPError as e:
-        print(f"[!] Exception caught: {e}")
-
-
-@router.post('/instagram/daily-basic-metrics')
+# get daily metrics for each day over a specified number of months
+@router.put('/instagram/basic-metrics/month')
 async def getDailyBasicMetrics(num_months: int):
 
     url = params['endpoint_base'] + \
@@ -117,7 +83,7 @@ async def getDailyBasicMetrics(num_months: int):
                     data_dict[(data_insight['data'][i]['name'])
                               ] += (data_insight['data'][i]['values'])
 
-        ref = db.reference("/instagram/daily-basic-metrics")
+        ref = db.reference("/instagram/basic-metrics/day")
         for i in range(0, len(list(data_dict.values())[0])):
             d = datetime.strptime(data_dict['reach'][i]['end_time'], "%Y-%m-%dT%H:%M:%S%z").strftime(
                 '%Y-%m-%d')
@@ -133,7 +99,52 @@ async def getDailyBasicMetrics(num_months: int):
         print(f"[!] Exception caught: {e}")
 
 
-@router.post('/instagram/media-metrics')
+@router.put('/instagram/basic-metrics/aggregated/{days}')
+async def getDailyBasicMetrics(days: int):
+
+    url = params['endpoint_base'] + \
+        params['instagram_account_id'] + '/insights'
+    endpointParams = dict()
+    endpointParams['metric'] = 'impressions, reach, profile_views, website_clicks, follower_count'
+    endpointParams['period'] = 'day'
+    endpointParams['since'] = ''
+    endpointParams['until'] = ''
+    endpointParams['access_token'] = params['access_token']
+
+    try:
+        data_dict = dict()
+        endDate = datetime.today()
+        # instagram graph api only returns a maximum of 30 days worth of data
+        startDate = (endDate + relativedelta(days=-days))
+        endpointParams['since'] = startDate.strftime('%Y-%m-%d')
+        endpointParams['until'] = endDate.strftime('%Y-%m-%d')
+
+        data = requests.get(url, endpointParams)
+        data_insight = json.loads(data.content)
+
+        for key in data_insight['data']:
+            data_dict[(key['name'])] = 0
+            for item in key['values']:
+                data_dict[key['name']] += item['value']
+
+        ref = db.reference(f"/instagram/basic-metrics/aggregated/{days}")
+        ref.set({"reach": data_dict['reach'],
+                "impressions": data_dict['impressions'],
+                 "profile_views": data_dict['profile_views'],
+                 "website_clicks": data_dict['website_clicks'],
+                 'new_followers': data_dict['follower_count'],
+                 'date_start': startDate.strftime(
+                '%Y-%m-%d'),
+            'date_stop': endDate.strftime(
+                '%Y-%m-%d')
+        })
+
+        return data_dict
+    except requests.HTTPError as e:
+        print(f"[!] Exception caught: {e}")
+
+
+@router.put('/instagram/media-metrics')
 async def getMediaMetrics():
     url = params['endpoint_base'] + \
         params['instagram_account_id'] + '/media'
@@ -185,70 +196,106 @@ async def getMediaMetrics():
     except requests.HTTPError as e:
         print(f"[!] Exception caught: {e}")
 
+# (follower_count) metric only supports querying data for the last 30 days excluding the current day
+
+
+@router.put('/instagram/basic-metrics/daily-follower-count')
+async def getDailyFollowerCount():
+    url = params['endpoint_base'] + \
+        params['instagram_account_id'] + '/insights'
+    endpointParams = dict()
+    endpointParams['metric'] = 'follower_count'
+    endpointParams['period'] = 'day'
+    endpointParams['since'] = ''
+    endpointParams['until'] = ''
+    endpointParams['access_token'] = params['access_token']
+    endDate = datetime.today()
+    startDate = (endDate + relativedelta(days=-30))
+    endpointParams['since'] = startDate.strftime('%Y-%m-%d')
+    endpointParams['until'] = endDate.strftime('%Y-%m-%d')
+    try:
+        data = requests.get(url, endpointParams)
+        data_insight = json.loads(data.content)
+
+        data_dict = dict()
+        data_dict['daily-new-followers'] = data_insight['data'][0]['values']
+
+        ref = db.reference("/instagram/basic-metrics/daily-new-followers")
+        for i in range(0, len(list(data_dict.values())[0])):
+            d = datetime.strptime(data_dict['daily-new-followers'][i]['end_time'], "%Y-%m-%dT%H:%M:%S%z").strftime(
+                '%Y-%m-%d')
+            ref.child(d).set({
+                "daily-new-followers": data_dict['daily-new-followers'][i]['value']
+            })
+
+        return data_insight
+    except requests.HTTPError as e:
+        print(f"[!] Exception caught: {e}")
+
 
 ### get requests for daily basic metrics (impressions, reach, profile_views, website_clicks) ###
-@router.get("/instagram/daily-basic-metrics/impressions")
+@router.get("/instagram/get-basic-metrics/day/{date}/impressions")
 async def get_impressions(date: str):
     """ Get impressions by date """
     try:
         ref = db.reference(
-            "/instagram/daily-basic-metrics/" + date + "/impressions")
+            "/instagram/basic-metrics/day/" + date + "/impressions")
         return ref.get()
     except Exception as err:
         raise err
 
 
-@router.get("/instagram/daily-basic-metrics/reach")
+@router.get("/instagram/get-basic-metrics/{date}/reach")
 async def get_reach(date: str):
     """ Get reach by date """
     try:
         ref = db.reference(
-            "/instagram/daily-basic-metrics/" + date + "/reach")
+            "/instagram/basic-metrics/day/" + date + "/reach")
         return ref.get()
     except Exception as err:
         raise err
 
 
-@router.get("/instagram/daily-basic-metrics/profile_views")
+@router.get("/instagram/get-basic-metrics/{date}//profile_views")
 async def get_profile_views(date: str):
     """ Get profile_views by date """
     try:
         ref = db.reference(
-            "/instagram/daily-basic-metrics/" + date + "/profile_views")
+            "/instagram/basic-metrics/day/" + date + "/profile_views")
         return ref.get()
     except Exception as err:
         raise err
 
 
-@router.get("/instagram/daily-basic-metrics/website_clicks")
+@router.get("/instagram/get-basic-metrics/{date}/website_clicks")
 async def get_website_clicks(date: str):
     """ Get website_clicks by date """
     try:
         ref = db.reference(
-            "/instagram/daily-basic-metrics/" + date + "/website_clicks")
+            "/instagram/basic-metrics/day/" + date + "/website_clicks")
         return ref.get()
     except Exception as err:
         raise err
 
 
 ### get requests for basic channel metrics ###
-@router.get("/instagram/basic-page-metrics/followers_count")
+@router.get("/instagram/get-basic-metrics/total_followers_count")
 async def get_followers_count():
     """ Get followers_count by date """
     try:
         ref = db.reference(
-            "/instagram/basic-page-metrics/" + "ig-page" + "/followers_count")
+            "/instagram/basic-metrics/" + "/total_followers_count")
         return ref.get()
     except Exception as err:
         raise err
 
 
-@router.get("/instagram/basic-page-metrics/media_count")
+@router.get("/instagram/get-basic-metrics/total_media_count")
 async def get_media_count():
     """ Get media_count by date """
     try:
         ref = db.reference(
-            "/instagram/basic-page-metrics/" + "ig-page" + "/media_count")
+            "/instagram/basic-metrics/" + "/total_media_count")
         return ref.get()
     except Exception as err:
         raise err
@@ -256,18 +303,50 @@ async def get_media_count():
 ### get requests for daily-follower-count metrics ###
 
 
-@router.get("/instagram/daily-follower-count/daily-new-followers")
+@router.get("/instagram/get-baisc-metrics/{date}/daily_new_followers")
 async def get_daily_new_followers(date: str):
     """ Get daily-new-followers by date """
     try:
         ref = db.reference(
-            "/instagram/daily-new-followers/" + date + "/daily-new-followers")
+            "/instagram/basic-metrics/daily-new-followers/" + date + "/daily-new-followers")
         return ref.get()
     except Exception as err:
         raise err
 
 ### get requests for daily basic metrics ###
+# (follower_count) metric only supports querying data for the last 30 days excluding the current day
+# @router.post('/instagram/daily-follower-count')
+# async def getDailyFollowerCount():
+#     url = params['endpoint_base'] + \
+#         params['instagram_account_id'] + '/insights'
+#     endpointParams = dict()
+#     endpointParams['metric'] = 'follower_count'
+#     endpointParams['period'] = 'day'
+#     endpointParams['since'] = ''
+#     endpointParams['until'] = ''
+#     endpointParams['access_token'] = params['access_token']
+#     endDate = datetime.today()
+#     startDate = (endDate + relativedelta(days=-30))
+#     endpointParams['since'] = startDate.strftime('%Y-%m-%d')
+#     endpointParams['until'] = endDate.strftime('%Y-%m-%d')
+#     try:
+#         data = requests.get(url, endpointParams)
+#         data_insight = json.loads(data.content)
 
+#         data_dict = dict()
+#         data_dict['daily-new-followers'] = data_insight['data'][0]['values']
+
+#         ref = db.reference("/instagram/daily-new-followers")
+#         for i in range(0, len(list(data_dict.values())[0])):
+#             d = datetime.strptime(data_dict['daily-new-followers'][i]['end_time'], "%Y-%m-%dT%H:%M:%S%z").strftime(
+#                 '%Y-%m-%d')
+#             ref.child(d).set({
+#                 "daily-new-followers": data_dict['daily-new-followers'][i]['value']
+#             })
+
+#         return data_insight
+#     except requests.HTTPError as e:
+#         print(f"[!] Exception caught: {e}")
 
 # @router.get('/instagram/basic-metrics')
 # async def getImpressionReach():
