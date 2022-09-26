@@ -5,9 +5,9 @@
   </el-container>
 </template>
 <script>
-// import Navbar from "./components/Navbar.vue";
-import Navbar2 from "./components/Navbar2.vue";
-// import Navbar2 from "./components/Navbar2.vue";
+
+import Navbar2 from "./components/Navbar.vue";
+
 export default {
   components: { Navbar2 },
 };
