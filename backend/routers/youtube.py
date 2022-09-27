@@ -46,10 +46,13 @@ youtubeAnalytics = googleapiclient.discovery.build(
 youtube = googleapiclient.discovery.build(
     'youtube', 'v3', credentials=credentials)
 
-#helper methods
+# helper methods
+
+
 def daterange(start_date, end_date):
     for n in range(int((end_date - start_date).days)):
         yield start_date + timedelta(n)
+
 
 def execute_api_request(client_library_function, **kwargs):
     return client_library_function(**kwargs).execute()
@@ -57,8 +60,8 @@ def execute_api_request(client_library_function, **kwargs):
 
 # Youtube Calls Dev purposes
 
-#@router.get("/youtube/basic-metrics-ignore")
-#async def getBasicMetrics(startDate: str, endDate: str):
+# @router.get("/youtube/basic-metrics-ignore")
+# async def getBasicMetrics(startDate: str, endDate: str):
     """ Aggregated metrics for owner's claimed content """
     """ Testing Functions inputs """
 #    try:
@@ -67,8 +70,8 @@ def execute_api_request(client_library_function, **kwargs):
 #            ids='channel==MINE',
 #            startDate=startDate,
 #
-# 
-# 
+#
+#
 #           endDate=endDate,
 #           metrics='views,comments,likes,dislikes,estimatedMinutesWatched,averageViewDuration',
 #           dimensions='day',
@@ -80,6 +83,8 @@ def execute_api_request(client_library_function, **kwargs):
   #      raise err
 
 # ETL Calls
+
+
 @router.put("/youtube/store-basic-metrics/aggregated/{days}")
 async def storeAggregatedBasicMetricsByDay(days: int):
     """ Storing basic metrics from the last x days """
@@ -87,11 +92,11 @@ async def storeAggregatedBasicMetricsByDay(days: int):
         endDate = datetime.today().strftime('%Y-%m-%d')
         startDate = (datetime.today() + relativedelta(days=-days)
                      ).strftime('%Y-%m-%d')
-        #gets aggregated data
+        # gets aggregated data
         responseChannel = execute_api_request(
             youtubeAnalytics.reports().query,
             ids='channel==MINE',
-            startDate= startDate,
+            startDate=startDate,
             endDate=endDate,
             metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration',
             dimensions='channel',
@@ -141,11 +146,12 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                 ref.child("femaleViewerPercentage").set({
                     i[0].split("age")[1]: i[2]
                 })
-        
-        return (responseChannel,youtubeDataResponse, responseChannelAudienceMetrics)
-        
+
+        return (responseChannel, youtubeDataResponse, responseChannelAudienceMetrics)
+
     except Exception as err:
         raise err
+
 
 @router.put("/youtube/store-basic-metrics/day")
 async def storeDailyBasicMetrics(days: int):
@@ -154,7 +160,7 @@ async def storeDailyBasicMetrics(days: int):
         endDate = datetime.today().strftime('%Y-%m-%d')
         startDate = (datetime.today() + relativedelta(days=-days)
                      ).strftime('%Y-%m-%d')
-        
+
         responseDay = execute_api_request(
             youtubeAnalytics.reports().query,
             ids='channel==MINE',
@@ -189,10 +195,10 @@ async def storeDailyBasicMetrics(days: int):
             })
 
         return (responseDay, youtubeDataResponse)
-        
 
     except Exception as err:
         raise err
+
 
 @router.put("/youtube/store-basic-metrics/total")
 async def storeTotalBasicMetrics():
@@ -202,7 +208,7 @@ async def storeTotalBasicMetrics():
         responseChannel = execute_api_request(
             youtubeAnalytics.reports().query,
             ids='channel==MINE',
-            startDate= '2015-01-01',
+            startDate='2015-01-01',
             endDate=endDate,
             metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration',
             dimensions='channel',
@@ -234,7 +240,7 @@ async def storeTotalBasicMetrics():
         responseChannelAudienceMetrics = execute_api_request(
             youtubeAnalytics.reports().query,
             ids='channel==MINE',
-            startDate= '2015-01-01',
+            startDate='2015-01-01',
             endDate=endDate,
             metrics='viewerPercentage',
             sort="gender,ageGroup",
@@ -250,13 +256,14 @@ async def storeTotalBasicMetrics():
                 ref.child("femaleViewerPercentage").set({
                     i[0].split("age")[1]: i[2]
                 })
-        
+
         return (responseChannel, responseChannelAudienceMetrics)
-        
+
     except Exception as err:
         raise err
 
 ### get requests for daily basic metrics ###
+
 
 @router.get("/youtube/basic-metrics/aggregated/{days}")
 async def getAggregatedBasicMetrics(days: int):
@@ -266,19 +273,21 @@ async def getAggregatedBasicMetrics(days: int):
     except Exception as err:
         raise err
 
+
 @router.get("/youtube/basic-metrics/day")
 async def getDailyBasicMetrics(days: int = 30):
     try:
         if days < 0:
-            days = 30    
+            days = 30
         now = datetime.now()
-        since = now - timedelta(days = days)
+        since = now - timedelta(days=days)
         dataset = {}
         ref = db.reference("/youtube/basic-metrics/day")
         metrics = ref.get()
         for single_date in daterange(since, now):
             curr_date = single_date.strftime("%Y-%m-%d")
-            if curr_date in metrics: #only retrieves if the current daily date is already stored in db.
+            # only retrieves if the current daily date is already stored in db.
+            if curr_date in metrics:
                 dataset[curr_date] = {}
                 for key, value in metrics[curr_date].items():
                     dataset[curr_date][key] = value
@@ -310,7 +319,7 @@ async def get_day_engagement(date: str):
 
 
 @router.get("/youtube/basic-metrics/day/{date}/estimatedMinsWatched")
-async def get_day_views(date: str):
+async def get_day_estimatedMinsWatched(date: str):
     """ Get estimatedMinsWatched by date """
     try:
         ref = db.reference("/youtube/basic-metrics/day/" +
@@ -321,7 +330,7 @@ async def get_day_views(date: str):
 
 
 @router.get("/youtube/basic-metrics/day/{date}/averageViewDuration")
-async def get_day_views(date: str):
+async def get_day_averageViewDuration(date: str):
     """ Get averageViewDuration by date """
     try:
         ref = db.reference("/youtube/basic-metrics/day/" +
@@ -330,7 +339,20 @@ async def get_day_views(date: str):
     except Exception as err:
         raise err
 
+
+@router.get("/youtube/basic-metrics/day/{date}/subscribers")
+async def get_day_subscribers(date: str):
+    """ Get subscribers by date """
+    try:
+        ref = db.reference("/youtube/basic-metrics/day/" +
+                           date + "/subscribers")
+        return ref.get()
+    except Exception as err:
+        raise err
+
+
 ### get requests for basic channel metrics ###
+
 
 @router.get("/youtube/basic-metrics/total/femaleViewerPercentage")
 async def get_channel_female_view_percentage():
@@ -341,6 +363,7 @@ async def get_channel_female_view_percentage():
     except Exception as err:
         raise err
 
+
 @router.get("/youtube/basic-metrics/total/maleViewerPercentage")
 async def get_channel_male_view_percentage():
     """ Get total viewer percentages for male """
@@ -349,6 +372,7 @@ async def get_channel_male_view_percentage():
         return ref.get()
     except Exception as err:
         raise err
+
 
 @router.get("/youtube/basic-metrics/total/views")
 async def get_total_views():
