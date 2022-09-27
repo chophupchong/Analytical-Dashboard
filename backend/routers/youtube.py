@@ -153,7 +153,7 @@ async def storeAggregatedBasicMetricsByDay(days: int):
         raise err
 
 
-@router.put("/youtube/store-basic-metrics/day")
+@router.put("/youtube/store-basic-metrics/{days}")
 async def storeDailyBasicMetrics(days: int):
     """ Storing basic metrics from the last x days """
     try:
@@ -178,7 +178,7 @@ async def storeDailyBasicMetrics(days: int):
             mine=True
         )
 
-        ref = db.reference(f"/youtube/basic-metrics/day")
+        ref = db.reference(f"/youtube/basic-metrics/daily")
 
         for i in responseDay['rows']:
             ref.child(i[0]).set({
@@ -274,7 +274,7 @@ async def getAggregatedBasicMetrics(days: int):
         raise err
 
 
-@router.get("/youtube/basic-metrics/day")
+@router.get("/youtube/basic-metrics/daily/{days}")
 async def getDailyBasicMetrics(days: int = 30):
     try:
         if days < 0:
@@ -282,7 +282,7 @@ async def getDailyBasicMetrics(days: int = 30):
         now = datetime.now()
         since = now - timedelta(days=days)
         dataset = {}
-        ref = db.reference("/youtube/basic-metrics/day")
+        ref = db.reference("/youtube/basic-metrics/daily")
         metrics = ref.get()
         for single_date in daterange(since, now):
             curr_date = single_date.strftime("%Y-%m-%d")
@@ -297,54 +297,54 @@ async def getDailyBasicMetrics(days: int = 30):
         raise err
 
 
-@router.get("/youtube/basic-metrics/day/{date}/views")
+@router.get("/youtube/basic-metrics/daily/{date}/views")
 async def get_day_views(date: str):
     """ Get views by date """
     try:
-        ref = db.reference("/youtube/basic-metrics/day/" + date + "/views")
+        ref = db.reference("/youtube/basic-metrics/daily/" + date + "/views")
         return ref.get()
     except Exception as err:
         raise err
 
 
-@router.get("/youtube/basic-metrics/day/{date}/engagement")
+@router.get("/youtube/basic-metrics/daily/{date}/engagement")
 async def get_day_engagement(date: str):
     """ Get engagement by date """
     try:
         ref = db.reference(
-            "/youtube/basic-metrics/day/" + date + "/engagement")
+            "/youtube/basic-metrics/daily/" + date + "/engagement")
         return ref.get()
     except Exception as err:
         raise err
 
 
-@router.get("/youtube/basic-metrics/day/{date}/estimatedMinsWatched")
+@router.get("/youtube/basic-metrics/daily/{date}/estimatedMinsWatched")
 async def get_day_estimatedMinsWatched(date: str):
     """ Get estimatedMinsWatched by date """
     try:
-        ref = db.reference("/youtube/basic-metrics/day/" +
+        ref = db.reference("/youtube/basic-metrics/daily/" +
                            date + "/estimatedMinsWatched")
         return ref.get()
     except Exception as err:
         raise err
 
 
-@router.get("/youtube/basic-metrics/day/{date}/averageViewDuration")
+@router.get("/youtube/basic-metrics/daily/{date}/averageViewDuration")
 async def get_day_averageViewDuration(date: str):
     """ Get averageViewDuration by date """
     try:
-        ref = db.reference("/youtube/basic-metrics/day/" +
+        ref = db.reference("/youtube/basic-metrics/daily/" +
                            date + "/averageViewDuration")
         return ref.get()
     except Exception as err:
         raise err
 
 
-@router.get("/youtube/basic-metrics/day/{date}/subscribers")
+@router.get("/youtube/basic-metrics/daily/{date}/subscribers")
 async def get_day_subscribers(date: str):
     """ Get subscribers by date """
     try:
-        ref = db.reference("/youtube/basic-metrics/day/" +
+        ref = db.reference("/youtube/basic-metrics/daily/" +
                            date + "/subscribers")
         return ref.get()
     except Exception as err:
