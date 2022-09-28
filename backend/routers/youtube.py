@@ -92,12 +92,26 @@ async def storeAggregatedBasicMetricsByDay(days: int):
         endDate = datetime.today().strftime('%Y-%m-%d')
         startDate = (datetime.today() + relativedelta(days=-days)
                      ).strftime('%Y-%m-%d')
+
+        prevPeriodEndDate = startDate
+        prevPeriodStartDate = (datetime.today() + relativedelta(days=-days * 2)
+                     ).strftime('%Y-%m-%d')
         # gets aggregated data
-        responseChannel = execute_api_request(
+        aggregatedDataResponse = execute_api_request(
             youtubeAnalytics.reports().query,
             ids='channel==MINE',
             startDate=startDate,
             endDate=endDate,
+            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration',
+            dimensions='channel',
+        )
+
+        # gets aggregated data from prev period
+        prevPeriodAggregatedDataResponse = execute_api_request(
+            youtubeAnalytics.reports().query,
+            ids='channel==MINE',
+            startDate=prevPeriodStartDate,
+            endDate=prevPeriodEndDate,
             metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration',
             dimensions='channel',
         )
@@ -110,12 +124,41 @@ async def storeAggregatedBasicMetricsByDay(days: int):
         )
 
         ref = db.reference(f"/youtube/basic-metrics/aggregated/{days}")
-
+        aggregatedData = {}
+        prevPeriodAggregatedData = {}
         # print(response['rows'][0][0])
-        for i in responseChannel['rows']:
+        
+        if len(aggregatedDataResponse['rows']) == 0:
             ref.set({
                 "date_start": startDate,
                 "date_stop": endDate,
+                "views": 0,
+                "comments": 0,
+                "likes": 0,
+                "dislikes": 0,
+                "shares": 0,
+                "estimatedMinutesWatched": 0,
+                "averageViewDuration": 0,
+                "engagement": 0,
+                "subscribers": youtubeDataResponse['items'][0]['statistics']['subscriberCount'],
+                })
+        else:
+            for i in aggregatedDataResponse['rows']:
+                ref.set({
+                    "date_start": startDate,
+                    "date_stop": endDate,
+                    "views": i[1],
+                    "comments": i[2],
+                    "likes": i[3],
+                    "dislikes": i[4],
+                    "shares": i[5],
+                    "estimatedMinutesWatched": i[6],
+                    "averageViewDuration": i[7],
+                    "engagement": i[2] + i[3] + i[4] + i[5],
+                    "subscribers": youtubeDataResponse['items'][0]['statistics']['subscriberCount'],
+                })
+
+            aggregatedData = {
                 "views": i[1],
                 "comments": i[2],
                 "likes": i[3],
@@ -123,9 +166,68 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                 "shares": i[5],
                 "estimatedMinutesWatched": i[6],
                 "averageViewDuration": i[7],
-                "engagement": i[2] + i[3] + i[4] + i[5],
-                "subscribers": youtubeDataResponse['items'][0]['statistics']['subscriberCount'],
-            })
+                "engagement": i[2] + i[3] + i[4] + i[5]
+            }
+        
+        for j in prevPeriodAggregatedDataResponse['rows']:
+            prevPeriodAggregatedData = {
+                "views": j[1],
+                "comments": j[2],
+                "likes": j[3],
+                "dislikes": j[4],
+                "shares": j[5],
+                "estimatedMinutesWatched": j[6],
+                "averageViewDuration": j[7],
+                "engagement": j[2] + j[3] + j[4] + j[5]
+            }
+        if aggregatedData == {}:
+            aggregatedData = {
+                "views": 1,
+                "comments": 1,
+                "likes": 1,
+                "dislikes": 1,
+                "shares": 1,
+                "estimatedMinutesWatched": 1,
+                "averageViewDuration": 1,
+                "engagement": 1
+            }
+
+        if prevPeriodAggregatedData == {}:
+            prevPeriodAggregatedData = {
+                "views": 1,
+                "comments": 1,
+                "likes": 1,
+                "dislikes": 1,
+                "shares": 1,
+                "estimatedMinutesWatched": 1,
+                "averageViewDuration": 1,
+                "engagement": 1
+            }
+
+        #set zero values to 1.
+        for key,value in aggregatedData.items():
+            if value == 0:
+                aggregatedData[key] = 1
+
+        for key,value in prevPeriodAggregatedData.items():
+            if value == 0:
+                prevPeriodAggregatedData[key] = 1  
+
+
+        #calculate and store percent change for metrics.
+        ref.child("metricsPercentageChange").update({
+            "viewsPercentChange": ((aggregatedData['views'] - prevPeriodAggregatedData['views']) / aggregatedData['views']) * 100,
+            "commentsPercentChange": ((aggregatedData['comments'] - prevPeriodAggregatedData['comments']) / aggregatedData['comments']) * 100,
+            "likesPercentChange": ((aggregatedData['likes'] - prevPeriodAggregatedData['likes']) / aggregatedData['likes']) * 100,
+            "dislikesPercentChange": ((aggregatedData['dislikes'] - prevPeriodAggregatedData['dislikes']) / aggregatedData['dislikes']) * 100,
+            "sharesPercentChange": ((aggregatedData['shares'] - prevPeriodAggregatedData['shares']) / aggregatedData['shares']) * 100,
+            "estimatedMinutesWatchedPercentChange": ((aggregatedData['estimatedMinutesWatched'] - prevPeriodAggregatedData['estimatedMinutesWatched']) 
+            / aggregatedData['estimatedMinutesWatched']) * 100,
+            "averageViewDurationPercentChange":((aggregatedData['averageViewDuration'] - prevPeriodAggregatedData['averageViewDuration']) 
+            / aggregatedData['averageViewDuration']) * 100,
+            "engagementPercentChange": ((aggregatedData['engagement'] - prevPeriodAggregatedData['engagement']) 
+            / aggregatedData['engagement']) * 100
+        })
 
         responseChannelAudienceMetrics = execute_api_request(
             youtubeAnalytics.reports().query,
@@ -147,10 +249,11 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                     i[0].split("age")[1]: i[2]
                 })
 
-        return (responseChannel, youtubeDataResponse, responseChannelAudienceMetrics)
+        return (aggregatedData, prevPeriodAggregatedData)
 
     except Exception as err:
         raise err
+
 
 
 @router.put("/youtube/store-basic-metrics/{days}")
