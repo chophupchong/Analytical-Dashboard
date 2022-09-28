@@ -1,88 +1,95 @@
 import axios from 'axios';
 
-const youtubeApi = 'https://localhost:8000/youtube/';
+const youtubeApi = 'http://localhost:8000/youtube/';
 
 const youtubeService = () => {
   const postStoreBasicMetrics = async (months) => {
-    const response = await axios.post(youtubeApi, 'storeBasicMetrics/', months);
+    const response = await axios.put(
+      youtubeApi + 'store-Basic-Metrics/aggregated' + months
+    );
     return response.data;
   };
 
-  const getDayViews = async (date) => {
-    const response = await axios.get(youtubeApi, 'day/', date, '/views');
-    return response.data;
-  };
-  const getDayEngagement = async (date) => {
-    const response = await axios.get(youtubeApi, 'day/', date, '/engagement');
-    return response.data;
-  };
-  const getDayEstimatedMinsWatched = async (date) => {
+  const getDailyViews = async (date) => {
     const response = await axios.get(
-      youtubeApi,
-      'day/',
-      date,
-      '/estimatedMinsWatched'
+      youtubeApi + 'basic-metrics/daily/' + date + '/views'
     );
     return response.data;
   };
-  const getDayAverageViewDuration = async (date) => {
+  const getDailyEngagement = async (date) => {
     const response = await axios.get(
-      youtubeApi,
-      'day/',
-      date,
-      '/averageViewDuration'
+      youtubeApi + 'basic-metrics/daily/' + date + '/engagement'
     );
     return response.data;
   };
+  const getDailyEstimatedMinsWatched = async (date) => {
+    const response = await axios.get(
+      youtubeApi + 'basic-metrics/daily/' + date + '/estimatedMinsWatched'
+    );
+    return response.data;
+  };
+  const getDailyAverageViewDuration = async (date) => {
+    const response = await axios.get(
+      youtubeApi + 'basic-metrics/daily/' + date + '/averageViewDuration'
+    );
+    return response.data;
+  };
+  const getDailySubscribers = async (date) => {
+    const response = await axios.get(
+      youtubeApi + 'basic-metrics/daily/' + date + '/subscribers'
+    );
+    return response.data;
+  };
+
   const getTotalViews = async () => {
-    const response = await axios.get(youtubeApi, 'total/views');
+    const response = await axios.get(youtubeApi + 'total/views');
     return response.data;
   };
   const getTotalLikes = async () => {
-    const response = await axios.get(youtubeApi, 'total/likes');
+    const response = await axios.get(youtubeApi + 'total/likes');
     return response.data;
   };
   const getTotalDislikes = async () => {
-    const response = await axios.get(youtubeApi, 'total/dislikes');
+    const response = await axios.get(youtubeApi + 'total/dislikes');
     return response.data;
   };
   const getTotalComments = async () => {
-    const response = await axios.get(youtubeApi, 'total/comments');
+    const response = await axios.get(youtubeApi + 'total/comments');
     return response.data;
   };
   const getTotalShares = async () => {
-    const response = await axios.get(youtubeApi, 'total/shares');
+    const response = await axios.get(youtubeApi + 'total/shares');
     return response.data;
   };
   const getTotalEngagement = async () => {
-    const response = await axios.get(youtubeApi, 'total/engagement');
+    const response = await axios.get(youtubeApi + 'total/engagement');
     return response.data;
   };
   const getTotalEstimatedMinutesWatched = async () => {
     const response = await axios.get(
-      youtubeApi,
-      'total/estimatedMinutesWatched'
+      youtubeApi + 'total/estimatedMinutesWatched'
     );
     return response.data;
   };
   const getTotalAverageViewDuration = async () => {
-    const response = await axios.get(youtubeApi, 'total/averageViewDuration');
+    const response = await axios.get(youtubeApi + 'total/averageViewDuration');
     return response.data;
   };
   const getTotalSubscribers = async () => {
-    const response = await axios.get(youtubeApi, 'total/subscribers');
+    const response = await axios.get(youtubeApi + 'total/subscribers');
     return response.data;
   };
   const getTotalSubscriberChange = async () => {
-    const response = await axios.get(youtubeApi, 'total/subscriberChange');
+    const response = await axios.get(youtubeApi + 'total/subscriberChange');
     return response.data;
   };
   return {
     postStoreBasicMetrics,
-    getDayViews,
-    getDayEngagement,
-    getDayEstimatedMinsWatched,
-    getDayAverageViewDuration,
+    getDailyViews,
+    getDailyEngagement,
+    getDailyEstimatedMinsWatched,
+    getDailyAverageViewDuration,
+    getDailySubscribers,
     getTotalViews,
     getTotalLikes,
     getTotalDislikes,
