@@ -1,3 +1,4 @@
+from tracemalloc import start
 from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -102,7 +103,7 @@ async def storeAggregatedBasicMetricsByDay(days: int):
             ids='channel==MINE',
             startDate=startDate,
             endDate=endDate,
-            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration',
+            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration,subscribersGained,subscribersLost',
             dimensions='channel',
         )
 
@@ -112,7 +113,7 @@ async def storeAggregatedBasicMetricsByDay(days: int):
             ids='channel==MINE',
             startDate=prevPeriodStartDate,
             endDate=prevPeriodEndDate,
-            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration',
+            metrics='views,comments,likes,dislikes,shares,estimatedMinutesWatched,averageViewDuration,subscribersGained,subscribersLost',
             dimensions='channel',
         )
 
@@ -166,7 +167,8 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                 "shares": i[5],
                 "estimatedMinutesWatched": i[6],
                 "averageViewDuration": i[7],
-                "engagement": i[2] + i[3] + i[4] + i[5]
+                "engagement": i[2] + i[3] + i[4] + i[5],
+                "netSubscriberChange" : i[8] - i[9]
             }
         
         for j in prevPeriodAggregatedDataResponse['rows']:
@@ -178,8 +180,10 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                 "shares": j[5],
                 "estimatedMinutesWatched": j[6],
                 "averageViewDuration": j[7],
-                "engagement": j[2] + j[3] + j[4] + j[5]
+                "engagement": j[2] + j[3] + j[4] + j[5],
+                "netSubscriberChange" : i[8] - i[9]
             }
+
         if aggregatedData == {}:
             aggregatedData = {
                 "views": 1,
@@ -189,7 +193,8 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                 "shares": 1,
                 "estimatedMinutesWatched": 1,
                 "averageViewDuration": 1,
-                "engagement": 1
+                "engagement": 1,
+                "netSubscriberChange" : 1
             }
 
         if prevPeriodAggregatedData == {}:
@@ -201,7 +206,8 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                 "shares": 1,
                 "estimatedMinutesWatched": 1,
                 "averageViewDuration": 1,
-                "engagement": 1
+                "engagement": 1,
+                "netSubscriberChange" : 1
             }
 
         #set zero values to 1.
@@ -226,8 +232,11 @@ async def storeAggregatedBasicMetricsByDay(days: int):
             "averageViewDurationPercentChange":((aggregatedData['averageViewDuration'] - prevPeriodAggregatedData['averageViewDuration']) 
             / aggregatedData['averageViewDuration']) * 100,
             "engagementPercentChange": ((aggregatedData['engagement'] - prevPeriodAggregatedData['engagement']) 
-            / aggregatedData['engagement']) * 100
+            / aggregatedData['engagement']) * 100,
+            "subscriberPecentChange": ((aggregatedData['netSubscriberChange'] - prevPeriodAggregatedData['netSubscriberChange']) 
+            / aggregatedData['netSubscriberChange']) * 100
         })
+
 
         responseChannelAudienceMetrics = execute_api_request(
             youtubeAnalytics.reports().query,
@@ -283,7 +292,8 @@ async def storeDailyBasicMetrics(days: int):
 
         ref = db.reference(f"/youtube/basic-metrics/daily")
 
-        for i in responseDay['rows']:
+        currSubscribers = int(youtubeDataResponse['items'][0]['statistics']['subscriberCount'])
+        for i in reversed(responseDay['rows']):
             ref.child(i[0]).set({
                 "views": i[1],
                 "comments": i[2],
@@ -293,9 +303,10 @@ async def storeDailyBasicMetrics(days: int):
                 "estimatedMinutesWatched": i[6],
                 "averageViewDuration": i[7],
                 "engagement": i[2] + i[3] + i[4] + i[5],
-                "subscribers": youtubeDataResponse['items'][0]['statistics']['subscriberCount'],
+                "subscribers":currSubscribers - (i[8] - i[9]),
                 "subscriberChange": i[8] - i[9]
             })
+            currSubscribers = currSubscribers - (i[8] - i[9])
 
         return (responseDay, youtubeDataResponse)
 
