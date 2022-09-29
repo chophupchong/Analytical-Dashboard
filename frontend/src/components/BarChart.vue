@@ -37,6 +37,8 @@ export default {
   name: 'BarChart',
   components: { Bar },
   props: {
+    chartOptions: String,
+    chartData: String,
     chartId: {
       type: String,
       default: 'bar-chart',
@@ -65,17 +67,6 @@ export default {
       type: Object,
       default: () => {},
     },
-  },
-  data() {
-    return {
-      chartData: {
-        labels: ['January', 'February', 'March'],
-        datasets: [{ data: [40, 20, 12] }],
-      },
-      chartOptions: {
-        responsive: true,
-      },
-    };
   },
 };
 </script>

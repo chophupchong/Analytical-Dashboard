@@ -56,37 +56,18 @@ export default {
   async mounted() {
     this.loaded = false;
 
-    const { getDailySubscribers } = youtubeService();
-    const today = new Date();
-    var year = today.getFullYear();
-    var month = String(today.getMonth() + 1).padStart(2, '0');
-    var day = String(today.getDate()).padStart(2, '0');
+    const { getBasicMetrics } = youtubeService();
     var dataLabels = [];
     var dataValues = [];
-    var count = 0;
     try {
-      while (count <= 30) {
-        if (parseInt(day) == 0) {
-          month = String(parseInt(month) - 1).padStart(2, '0');
-          day = new Date(parseInt(year), parseInt(month), 0).getDate();
-          if (parseInt(month) == 0) {
-            year = String(parseInt(year) - 1);
-            month = String(12).padStart(2, '0');
-          }
-        }
-        var formattedDate = `${year}-${month}-08`;
-        var subscribers = await getDailySubscribers(formattedDate);
-        if (subscribers != null) {
-          dataValues.push(subscribers);
-          dataLabels.push(day + '/' + month);
-        }
-        day -= 1;
-        count += 1;
-      }
-      this.chartData.datasets[0]['data'] = dataValues;
-      this.chartData.labels = dataLabels;
+      var basicMetrics = await getBasicMetrics(30);
 
-      this.loaded = true;
+      for (const date of Object.keys(basicMetrics)) {
+        dataLabels.push(date);
+        dataValues.push(basicMetrics[date]['subscribers']);
+      }
+      this.chartData.labels = dataLabels;
+      this.chartData.datasets[0]['data'] = dataValues;
     } catch (e) {
       console.error(e);
     }
