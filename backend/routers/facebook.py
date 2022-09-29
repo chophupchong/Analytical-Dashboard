@@ -72,8 +72,9 @@ async def getAggregatedBasicAdMetricsByDays(days: int = 30):
         # 'actions:page_engagement',
         # 'actions:like',
         #'actions', #most of the info is here
-    ]
+    ] #https://developers.facebook.com/docs/marketing-api/insights/parameters/v15.0
     
+    #current period dates
     now = datetime.datetime.now()
     year = '{:02d}'.format(now.year)
     month = '{:02d}'.format(now.month)
@@ -85,11 +86,25 @@ async def getAggregatedBasicAdMetricsByDays(days: int = 30):
     month = '{:02d}'.format(since.month)
     day = '{:02d}'.format(since.day)
     since_day_month_year = '{}-{}-{}'.format(year, month, day)
+    
+    #previous period dates
+    prev_now = since - datetime.timedelta(days=1)
+    year = '{:02d}'.format(prev_now.year)
+    month = '{:02d}'.format(prev_now.month)
+    day = '{:02d}'.format(prev_now.day)
+    prev_now_day_month_year = '{}-{}-{}'.format(year, month, day)
+    
+    prev_since = prev_now - datetime.timedelta(days=days)
+    year = '{:02d}'.format(prev_since.year)
+    month = '{:02d}'.format(prev_since.month)
+    day = '{:02d}'.format(prev_since.day)
+    prev_since_day_month_year = '{}-{}-{}'.format(year, month, day)
+    
     params = {
         'time_range': {'since': since_day_month_year, 'until': now_day_month_year},
-        'filtering': [],
+        'filtering': [], #https://developers.facebook.com/docs/marketing-api/ad-rules/overview/evaluation-spec
         'level': 'account',
-        #'breakdowns': ['ad_name'],
+        'breakdowns': ['publisher_platform'], #https://developers.facebook.com/docs/marketing-api/insights/breakdowns
     }
     for ad_account_id in ad_account_ids:
         dataset[ad_account_id] = {
@@ -97,7 +112,14 @@ async def getAggregatedBasicAdMetricsByDays(days: int = 30):
             "impressions": "0",
             "spend": "0",
             "date_start": since_day_month_year,
-            "date_stop": now_day_month_year
+            "date_stop": now_day_month_year,
+            "previous_period": {
+                "reach": "0",
+                "impressions": "0",
+                "spend": "0",
+                "date_start": prev_since_day_month_year,
+                "date_stop": prev_now_day_month_year,
+            }
         }
         ref = db.reference(f"/facebook/{ad_account_id}/basic-ad-metrics/aggregated/{days}")
         result = AdAccount(ad_account_id).get_insights(
@@ -107,6 +129,8 @@ async def getAggregatedBasicAdMetricsByDays(days: int = 30):
 
         for record in result:
             # print(dir(record))
+            if (record['publisher_platform'] != "facebook"):
+                continue
             for metric_name in record:
                 #print(metric_name + ": " + record[metric_name])
                 dataset[ad_account_id][metric_name] = record[metric_name]
@@ -117,7 +141,33 @@ async def getAggregatedBasicAdMetricsByDays(days: int = 30):
             "date_start": dataset[ad_account_id]["date_start"],
             "date_stop": dataset[ad_account_id]["date_stop"]
         })
-    
+        
+    #now to get and store previous period data.
+    params = {
+        'time_range': {'since': prev_since_day_month_year, 'until': prev_now_day_month_year}, #prev period dates
+        'filtering': [], #https://developers.facebook.com/docs/marketing-api/ad-rules/overview/evaluation-spec
+        'level': 'account',
+        'breakdowns': ['publisher_platform'], #https://developers.facebook.com/docs/marketing-api/insights/breakdowns
+    }
+    for ad_account_id in ad_account_ids:
+        ref = db.reference(f"/facebook/{ad_account_id}/basic-ad-metrics/aggregated/{days}/previous_period")
+        result = AdAccount(ad_account_id).get_insights(
+            fields=fields,
+            params=params,
+        )
+
+        for record in result:
+            if (record['publisher_platform'] != "facebook"):
+                continue
+            for metric_name in record:
+                dataset[ad_account_id]["previous_period"][metric_name] = record[metric_name]
+        ref.update({
+            "reach": dataset[ad_account_id]["previous_period"]["reach"],
+            "impressions": dataset[ad_account_id]["previous_period"]["impressions"],
+            "spend": dataset[ad_account_id]["previous_period"]["spend"],
+            "date_start": dataset[ad_account_id]["previous_period"]["date_start"],
+            "date_stop": dataset[ad_account_id]["previous_period"]["date_stop"]
+        })
     return json.dumps(dataset)
 
 #reading from db
@@ -169,6 +219,7 @@ async def getDailyBasicAdMetrics(days: int = 30):
         'filtering': [],
         'level': 'account',
         #'breakdowns': ['ad_name'],
+        'breakdowns': ['publisher_platform'],
         "time_increment": 1, #to get daily increment https://developers.facebook.com/docs/marketing-api/insights/parameters/v15.0
     }
     for ad_account_id in ad_account_ids:
@@ -190,6 +241,8 @@ async def getDailyBasicAdMetrics(days: int = 30):
         )
         print(result)
         for record in result:
+            if (record['publisher_platform'] != "facebook"):
+                continue
             dataset[ad_account_id][record["date_stop"]] = {
                 "reach": record["reach"],
                 "impressions": record["impressions"],
