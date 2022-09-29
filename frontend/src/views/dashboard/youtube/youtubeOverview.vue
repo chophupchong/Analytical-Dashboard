@@ -48,7 +48,7 @@
 </template>
 
 <script>
-import { youtubeService } from '@/services/youtube';
+import { basicMetrics } from '@/helper/youtube';
 import BarChart from '@/components/BarChart.vue';
 export default {
   components: { BarChart },
@@ -56,18 +56,11 @@ export default {
   async mounted() {
     this.loaded = false;
 
-    const { getBasicMetrics } = youtubeService();
-    var dataLabels = [];
-    var dataValues = [];
+    const { getSubscriberBarChart } = basicMetrics();
     try {
-      var basicMetrics = await getBasicMetrics(30);
-
-      for (const date of Object.keys(basicMetrics)) {
-        dataLabels.push(date);
-        dataValues.push(basicMetrics[date]['subscribers']);
-      }
-      this.chartData.labels = dataLabels;
-      this.chartData.datasets[0]['data'] = dataValues;
+      var subscriberMetrics = await getSubscriberBarChart(60);
+      this.chartData.labels = subscriberMetrics[0];
+      this.chartData.datasets[0]['data'] = subscriberMetrics[1];
     } catch (e) {
       console.error(e);
     }
@@ -82,6 +75,9 @@ export default {
         responsive: true,
       },
     };
+  },
+  methods: {
+    basicMetrics,
   },
 };
 </script>
