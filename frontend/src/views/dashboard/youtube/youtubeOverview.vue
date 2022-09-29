@@ -41,77 +41,18 @@
         </el-menu>
       </el-main>
       <el-main>
-        <Bar
-          :chart-options="chartOptions"
-          :chart-data="chartData"
-          :chart-id="chartId"
-          :dataset-id-key="datasetIdKey"
-          :plugins="plugins"
-          :css-classes="cssClasses"
-          :styles="styles"
-          :width="width"
-          :height="height"
-        />
+        <BarChart :chart-options="chartOptions" :chart-data="chartData" />
       </el-main>
     </el-container>
   </div>
 </template>
 
 <script>
-import { Bar } from 'vue-chartjs';
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-} from 'chart.js';
-
-import { youtubeService } from '../../../services/youtube';
-ChartJS.register(
-  Title,
-  Tooltip,
-  Legend,
-  BarElement,
-  CategoryScale,
-  LinearScale
-);
-
+import { youtubeService } from '@/services/youtube';
+import BarChart from '@/components/BarChart.vue';
 export default {
-  name: 'BarChart',
-  components: { Bar },
-  props: {
-    chartId: {
-      type: String,
-      default: 'bar-chart',
-    },
-    datasetIdKey: {
-      type: String,
-      default: 'label',
-    },
-    width: {
-      type: Number,
-      default: 400,
-    },
-    height: {
-      type: Number,
-      default: 400,
-    },
-    cssClasses: {
-      default: '',
-      type: String,
-    },
-    styles: {
-      type: Object,
-      default: () => {},
-    },
-    plugins: {
-      type: Object,
-      default: () => {},
-    },
-  },
+  components: { BarChart },
+
   async mounted() {
     this.loaded = false;
 
@@ -162,52 +103,6 @@ export default {
     };
   },
 };
-
-// export default {
-//   name: 'BarChart',
-//   components: { Bar },
-//   data: () => ({
-//     loaded: false,
-//     chartData: null,
-//   }),
-//   async mounted() {
-//     this.loaded = false;
-
-//     const { getDailySubscribers } = youtubeService();
-//     const today = new Date();
-//     var dataValues = [];
-//     var dataLabels = [];
-//     var year = today.getFullYear();
-//     var month = String(today.getMonth() + 1).padStart(2, '0');
-//     var day = String(today.getDate()).padStart(2, '0');
-
-//     // var count = 0;
-//     try {
-//       // while (count <= 30) {
-//       //   if (parseInt(day) == 0) {
-//       //     month = (parseInt(month) - 1).toString('00');
-//       //     day = new Date(parseInt(year), parseInt(month), 0).getDate();
-//       //     if (parseInt(month) == 0) {
-//       //       year = (parseInt(year) - 1).toString('0000');
-//       //       month = (12).toString('00');
-//       //     }
-//       //   }
-//       var formattedDate = `${year}-${month}-08`;
-//       var subscribers = await getDailySubscribers(formattedDate);
-//       if (subscribers != null) {
-//         this.chartData.labels.push(subscribers);
-//         dataLabels.push(day + '/' + month);
-//       }
-//       day -= 1;
-//       // count += 1;
-//       // }
-
-//       this.loaded = true;
-//     } catch (e) {
-//       console.error(e);
-//     }
-//   },
-// };
 </script>
 
 <style>
