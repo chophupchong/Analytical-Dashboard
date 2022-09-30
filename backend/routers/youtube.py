@@ -86,7 +86,7 @@ def execute_api_request(client_library_function, **kwargs):
 # ETL Calls
 
 
-@router.put("/youtube/store-basic-metrics/aggregated/{days}")
+@router.put("/youtube/store-basic-metrics/aggregated/{days}", tags=["youtube"])
 async def storeAggregatedBasicMetricsByDay(days: int):
     """ Storing basic metrics from the last x days """
     try:
@@ -262,7 +262,7 @@ async def storeAggregatedBasicMetricsByDay(days: int):
         raise err
 
 
-@router.put("/youtube/store-basic-metrics/{days}")
+@router.put("/youtube/store-basic-metrics/{days}",  tags=["youtube"])
 async def storeDailyBasicMetrics(days: int):
     """ Storing basic metrics from the last x days """
     try:
@@ -312,7 +312,7 @@ async def storeDailyBasicMetrics(days: int):
         raise err
 
 
-@router.put("/youtube/store-basic-metrics/total")
+@router.put("/youtube/store-basic-metrics/total", tags=["youtube"])
 async def storeTotalBasicMetrics():
     """ Storing latest basic channel metrics """
     try:
@@ -377,7 +377,7 @@ async def storeTotalBasicMetrics():
 ### get requests for daily basic metrics ###
 
 
-@router.get("/youtube/basic-metrics/aggregated/{days}")
+@router.get("/youtube/basic-metrics/aggregated/{days}", tags=["youtube"])
 async def getAggregatedBasicMetrics(days: int):
     try:
         ref = db.reference(f"/youtube/basic-metrics/aggregated/{days}")
@@ -386,7 +386,7 @@ async def getAggregatedBasicMetrics(days: int):
         raise err
 
 
-@router.get("/youtube/basic-metrics/daily/{days}")
+@router.get("/youtube/basic-metrics/daily/{days}",  tags=["youtube"])
 async def getDailyBasicMetrics(days: int = 30):
     try:
         if days < 0:
