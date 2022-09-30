@@ -48,7 +48,7 @@ def daterange(start_date, end_date):
         yield start_date + timedelta(n)
 
 
-@router.put('/youtube/basic-ad-metrics/aggregated/{days}',  tags=["google-ads"])
+@router.put('/youtube/basic-ad-metrics/aggregated/{days}',  tags=["youtube-ads"])
 def storeAggregatedBasicAdMetrics(days: int):
     try:
         ga_service = client.get_service("GoogleAdsService")
@@ -97,7 +97,7 @@ def storeAggregatedBasicAdMetrics(days: int):
         raise err
 
 
-@router.put('/youtube/basic-ad-metrics/day', tags=["google-ads"])
+@router.put('/youtube/basic-ad-metrics/day', tags=["youtube-ads"])
 def storeBasicAdMetricsByDay(days: int):
     try:
         ga_service = client.get_service("GoogleAdsService")
