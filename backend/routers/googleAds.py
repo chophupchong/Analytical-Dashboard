@@ -97,7 +97,7 @@ def storeAggregatedBasicAdMetrics(days: int):
         raise err
 
 
-@router.put('/youtube/basic-ad-metrics/day', tags=["youtube-ads"])
+@router.put('/youtube/basic-ad-metrics/{days}', tags=["youtube-ads"])
 def storeBasicAdMetricsByDay(days: int):
     try:
         ga_service = client.get_service("GoogleAdsService")
