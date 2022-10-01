@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="mt-4 flex flex-col">
+  <form action="#" @submit.prevent="Login" class="mt-4 flex flex-col">
     <h3 class="text-xl underline">Login</h3>
 
     <label for="email">Email:</label>
@@ -44,18 +44,20 @@ export default {
     const store = useStore();
     const router = useRouter();
 
-    const handleSubmit = async () => {
+    const Login = async () => {
       try {
-        await store.dispatch('login', {
+        console.log(store.getters.authenticated);
+        await store.dispatch('logIn', {
           email: email.value,
           password: password.value,
         });
+        console.log(store.getters.authenticated);
         router.push('/');
       } catch (err) {
         error.value = err.message;
       }
     };
-    return { handleSubmit, email, password, error };
+    return { Login, email, password, error };
   },
 };
 </script>
