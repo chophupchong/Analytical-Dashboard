@@ -46,7 +46,7 @@
             ><Tools /></el-icon
           >Settings</el-menu-item
         >
-        <el-menu-item index="2-4">Logout</el-menu-item>
+        <el-button @click="Logout"> Logout</el-button>
       </el-menu>
     </el-col>
   </el-row>
@@ -54,12 +54,26 @@
 
 <script setup>
 /*use script setup to locally register component by simply importing the component*/
-import { Histogram, Tools } from "@element-plus/icons-vue";
+import { Histogram, Tools } from '@element-plus/icons-vue';
 </script>
 
 <script>
+import store from '../store';
+
 export default {
-  name: "navbar-component",
+  name: 'navbar-component',
+  setup() {},
+  methods: {
+    Logout: async function () {
+      try {
+        console.log(store.getters.authenticated);
+        await store.dispatch('logOut');
+        console.log(store.getters.authenticated);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+  },
 };
 </script>
 
