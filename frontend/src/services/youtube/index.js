@@ -17,9 +17,17 @@ const youtubeService = () => {
     return response.data;
   };
 
+  const getAggregatedBasicMetrics = async (days) => {
+    const response = await axios.get(
+      youtubeApi + 'basic-metrics/aggregated/' + days
+    );
+    return response.data;
+  };
+
   return {
     postStoreBasicMetrics,
     getBasicMetrics,
+    getAggregatedBasicMetrics
   };
 };
 
