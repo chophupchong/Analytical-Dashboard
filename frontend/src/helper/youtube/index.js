@@ -1,6 +1,6 @@
 import { youtubeService } from '@/services/youtube';
 
-const { getBasicMetrics } = youtubeService();
+const { getBasicMetrics, getAggregatedBasicMetrics } = youtubeService();
 
 const basicMetrics = () => {
   const getSubscriberBarChart = async (days) => {
@@ -8,6 +8,8 @@ const basicMetrics = () => {
     var dataValues = [];
     try {
       var basicMetrics = await getBasicMetrics(days);
+      basicMetrics = basicMetrics['Chop Hup Chong']
+
       for (const date of Object.keys(basicMetrics)) {
         dataLabels.push(date);
         dataValues.push(basicMetrics[date]['subscribers']);
@@ -18,8 +20,34 @@ const basicMetrics = () => {
     return [dataLabels, dataValues];
   };
 
+  const getAggregatedBasicMetricData = async (days) => {
+    try {
+      var aggregatedBasicMetrics = await getAggregatedBasicMetrics(days);
+      aggregatedBasicMetrics = aggregatedBasicMetrics['Chop Hup Chong']
+
+      var metrics = aggregatedBasicMetrics
+    } catch (e) {
+      console.error(e);
+    }
+    return metrics;
+  };
+
+  const getPercentageChange = async (days) => {
+    try {
+      var aggregatedBasicMetrics = await getAggregatedBasicMetrics(days);
+      aggregatedBasicMetrics = aggregatedBasicMetrics['Chop Hup Chong']
+
+      var percentageChangeMetrics = aggregatedBasicMetrics['metricsPercentageChange']
+    } catch (e) {
+      console.error(e);
+    }
+    return percentageChangeMetrics;
+  };
+
   return {
     getSubscriberBarChart,
+    getAggregatedBasicMetricData,
+    getPercentageChange
   };
 };
 

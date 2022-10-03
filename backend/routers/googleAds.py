@@ -52,11 +52,7 @@ def daterange(start_date, end_date):
 @router.put('/youtube/store-basic-ad-metrics/aggregated/{days}',  tags=["youtube-ads"])
 def storeAggregatedBasicAdMetricsByDay(days: int):
     try:
-        #will change in future
         accountNameEdited = accountNames.copy()
-        if accountNameEdited[0] == 'Chop Hup Chong':
-            accountNameEdited[0] = 'Hup Chong' 
-
         for token in range(len(accountNames)):
             credentials = {
                 "developer_token": developerToken,
@@ -81,8 +77,11 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
                         metrics.engagements, 
                         metrics.interactions, 
                         metrics.average_cost 
-                        FROM campaign WHERE segments.date BETWEEN '{startDate}' AND '{endDate}' AND campaign.name LIKE '%{accountNameEdited[token]}%' 
-                    """
+                        FROM campaign WHERE segments.date BETWEEN '{startDate}' AND '{endDate}'"""
+            
+            for word in accountNameEdited[token].split(" "):
+                aggregatedBasicAdMetrics += f" AND campaign.name LIKE '%{word}%"
+
             search_request = client.get_type("SearchGoogleAdsRequest")
             search_request.customer_id = clientCustomerId
             search_request.query = aggregatedBasicAdMetrics
@@ -120,9 +119,6 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
 def storeDailyBasicAdMetrics(days: int):
     try:
         accountNameEdited = accountNames.copy()
-        if accountNameEdited[0] == 'Chop Hup Chong':
-            accountNameEdited[0] = 'Hup Chong' 
-
         for token in range(len(accountNames)):
             credentials = {
                 "developer_token": developerToken,
@@ -148,9 +144,11 @@ def storeDailyBasicAdMetrics(days: int):
                     metrics.interactions, 
                     metrics.average_cost,
                     segments.date
-                    FROM campaign WHERE segments.date BETWEEN '{startDate}' AND '{endDate}' AND campaign.name LIKE '%{accountNameEdited[token]}%'
+                    FROM campaign WHERE segments.date BETWEEN '{startDate}' AND '{endDate}'"""
+            
+            for word in accountNameEdited[token].split(" "):
+                dailyBasicAdMetrics += f" AND campaign.name LIKE '%{word}%"
                 
-                """
             search_request = client.get_type("SearchGoogleAdsRequest")
             search_request.customer_id = clientCustomerId
             search_request.query = dailyBasicAdMetrics

@@ -233,7 +233,7 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                                                  / aggregatedData['averageViewDuration']) * 100,
                 "engagementPercentChange": ((aggregatedData['engagement'] - prevPeriodAggregatedData['engagement'])
                                         / aggregatedData['engagement']) * 100,
-                "subscriberPecentChange": ((aggregatedData['netSubscriberChange'] - prevPeriodAggregatedData['netSubscriberChange'])
+                "subscriberPercentChange": ((aggregatedData['netSubscriberChange'] - prevPeriodAggregatedData['netSubscriberChange'])
                                        / aggregatedData['netSubscriberChange']) * 100
             })
 
