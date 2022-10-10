@@ -1,3 +1,4 @@
+from cgi import test
 from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -38,6 +39,7 @@ credentials = {
     "client_id": clientID,
     "client_secret": clientSecret,
     "login_customer_id": managerCustomerId,
+    "client_customer_id": clientCustomerId,
     "use_proto_plus": protoPlus
 }
 
@@ -60,12 +62,13 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
                 "client_id": clientID,
                 "client_secret": clientSecret,
                 "login_customer_id": managerCustomerId,
+                "client_customer_id": clientCustomerId,
                 "use_proto_plus": protoPlus
             }   
             client = GoogleAdsClient.load_from_dict(credentials)       
             ga_service = client.get_service("GoogleAdsService")
             endDate = datetime.today().strftime('%Y-%m-%d')
-            startDate = (datetime.today() + relativedelta(months=-days)
+            startDate = (datetime.today() + relativedelta(days=-days)
                         ).strftime('%Y-%m-%d')
 
             aggregatedBasicAdMetrics = f"""
@@ -76,11 +79,14 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
                         metrics.clicks,
                         metrics.engagements, 
                         metrics.interactions, 
-                        metrics.average_cost 
+                        metrics.average_cpm 
                         FROM campaign WHERE segments.date BETWEEN '{startDate}' AND '{endDate}'"""
             
             for word in accountNameEdited[token].split(" "):
-                aggregatedBasicAdMetrics += f" AND campaign.name LIKE '%{word}%"
+                if word =='Chop':
+                    continue
+                else:
+                    aggregatedBasicAdMetrics += f" AND campaign.name LIKE '%{word}%'"
 
             search_request = client.get_type("SearchGoogleAdsRequest")
             search_request.customer_id = clientCustomerId
@@ -95,21 +101,20 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
                 'clicks': 0,
                 'interactions': 0
             }
-
-            test = ""
+            
+            #all average etc must be divided by 1 million. (intended calculation by google)
             for row in results:
                 dataset['impressions'] += row.metrics.impressions
                 dataset['ctr'] += row.metrics.ctr
                 dataset['clicks'] += row.metrics.clicks
                 dataset['engagements'] += row.metrics.engagements
                 dataset['interactions'] += row.metrics.interactions
-                dataset['spend'] += row.metrics.average_cost * \
-                    row.metrics.interactions
-                test += f"{row.campaign.name}, "
-
+                dataset['spend'] += (row.metrics.average_cpm /1000000) * (row.metrics.impressions / 1000)
+                
+                
             ref = db.reference(f"/youtube/{accountNames[token]}/basic-ad-metrics/aggregated/{days}")
             ref.set(dataset)
-        return test
+        return dataset
 
     except Exception as err:
         raise err
@@ -126,6 +131,7 @@ def storeDailyBasicAdMetrics(days: int):
                 "client_id": clientID,
                 "client_secret": clientSecret,
                 "login_customer_id": managerCustomerId,
+                "client_customer_id": clientCustomerId,
                 "use_proto_plus": protoPlus
             }   
             client = GoogleAdsClient.load_from_dict(credentials)   
@@ -137,17 +143,21 @@ def storeDailyBasicAdMetrics(days: int):
             # cannot develop further because test account returns empty metrics.
             dailyBasicAdMetrics = f"""
                 SELECT  
+                    
                     metrics.impressions, 
                     metrics.ctr, 
                     metrics.clicks,
                     metrics.engagements, 
                     metrics.interactions, 
-                    metrics.average_cost,
+                    metrics.average_cpm,
                     segments.date
                     FROM campaign WHERE segments.date BETWEEN '{startDate}' AND '{endDate}'"""
             
             for word in accountNameEdited[token].split(" "):
-                dailyBasicAdMetrics += f" AND campaign.name LIKE '%{word}%"
+                if word =='Chop':
+                    continue
+                else:
+                    dailyBasicAdMetrics += f" AND campaign.name LIKE '%{word}%'"
                 
             search_request = client.get_type("SearchGoogleAdsRequest")
             search_request.customer_id = clientCustomerId
@@ -176,8 +186,7 @@ def storeDailyBasicAdMetrics(days: int):
                 dataset[f"{row.segments.date}"]['clicks'] += row.metrics.clicks
                 dataset[f"{row.segments.date}"]['engagements'] += row.metrics.engagements
                 dataset[f"{row.segments.date}"]['interactions'] += row.metrics.interactions
-                dataset[f"{row.segments.date}"]['spend'] += row.metrics.average_cost * \
-                    row.metrics.interactions
+                dataset[f"{row.segments.date}"]['spend'] += (row.metrics.average_cpm /1000000) * (row.metrics.impressions / 1000)
 
             ref = db.reference(f"/youtube/{accountNames[token]}/basic-ad-metrics/daily")
             ref.set(dataset)
@@ -185,7 +194,7 @@ def storeDailyBasicAdMetrics(days: int):
 
     except Exception as err:
         raise err
-
+#write some changes
 ### get requests for daily basic metrics ###
 
 
