@@ -310,7 +310,7 @@ async def updateDailyBasicAdMetrics():
     now_day_month_year = '{}-{}-{}'.format(year, month, day)
     
     for ad_account_id in ad_account_ids:
-        ref = db.reference(f"/facebook/{ad_account_id}/basic-ad-metrics/daily/last_updated_datez")
+        ref = db.reference(f"/facebook/{ad_account_id}/basic-ad-metrics/daily/last_updated_date")
         since_day_month_year_date = ref.get()
         if since_day_month_year_date == None:
             since = now - datetime.timedelta(days=1110)
