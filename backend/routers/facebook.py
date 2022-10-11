@@ -24,6 +24,19 @@ def daterange(start_date, end_date):
     for n in range(int((end_date - start_date).days)+1):
         yield start_date + datetime.timedelta(n)
 
+#helper method
+def actions_dictionary(actions_list):
+    actions_dict = {
+        "rsvp": 0, #events_responses
+        "post_engagement": 0, #post_engagements
+        "onsite_conversion.messaging_conversation_started_7d": 0, #messaging_conversations_started
+        "link_click": 0, #link_clicks
+    }
+    for action in actions_list:
+        if action["action_type"] in actions_dict:
+            actions_dict[action["action_type"]] = int(action["value"])
+    return actions_dict
+
 #test
 # @router.get("/facebook/test")
 # async def root():
@@ -61,17 +74,20 @@ def daterange(start_date, end_date):
 async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
     if days < 0:
         days = 30
+    if days > 550:
+        days = 550
     FacebookAdsApi.init(access_token=access_token)
     dataset = {}
     fields = [
         'reach',
         'impressions',
         'spend',
+        'actions', #ad objective metrics
         # 'quality_score_ecvr',
         # 'quality_score_ectr',
         # 'actions:page_engagement',
         # 'actions:like',
-        #'actions', #most of the info is here
+        
     ] #https://developers.facebook.com/docs/marketing-api/insights/parameters/v15.0
     
     #current period dates
@@ -111,6 +127,10 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
             "reach": 0,
             "impressions": 0,
             "spend": 0.00,
+            "events_responses": 0,
+            "post_engagements": 0,
+            "messaging_conversations_started": 0,
+            "link_clicks": 0,
             "date_start": since_day_month_year,
             "date_stop": now_day_month_year,
             "previous_period": {
@@ -129,11 +149,20 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
 
         for record in result:
             # print(dir(record))
-            if (record['publisher_platform'] != "facebook"):
+            if (record['publisher_platform'] == "instagram"):
                 continue
+            actions_list = []
+            if "actions" in record:
+                actions_list = record["actions"]
+            actions_dict = actions_dictionary(actions_list)
             dataset[ad_account_id]["reach"] += int(record["reach"])
             dataset[ad_account_id]["impressions"] += int(record["impressions"])
             dataset[ad_account_id]["spend"] += float(record["spend"])
+            dataset[ad_account_id]["impressions"] += int(record["impressions"])
+            dataset[ad_account_id]["events_responses"] += actions_dict["rsvp"]
+            dataset[ad_account_id]["post_engagements"] += actions_dict["post_engagement"]
+            dataset[ad_account_id]["messaging_conversations_started"] += actions_dict["onsite_conversion.messaging_conversation_started_7d"]
+            dataset[ad_account_id]["link_clicks"] += actions_dict["link_click"]
             # for metric_name in record:
             #     #print(metric_name + ": " + record[metric_name])
             #     dataset[ad_account_id][metric_name] = record[metric_name]
@@ -141,6 +170,10 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
             "reach": dataset[ad_account_id]["reach"],
             "impressions": dataset[ad_account_id]["impressions"],
             "spend": dataset[ad_account_id]["spend"],
+            "events_responses": dataset[ad_account_id]["events_responses"],
+            "post_engagements": dataset[ad_account_id]["post_engagements"],
+            "messaging_conversations_started": dataset[ad_account_id]["messaging_conversations_started"],
+            "link_clicks": dataset[ad_account_id]["link_clicks"],
             "date_start": dataset[ad_account_id]["date_start"],
             "date_stop": dataset[ad_account_id]["date_stop"]
         })
@@ -164,13 +197,25 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
                 continue
             # for metric_name in record:
             #     dataset[ad_account_id]["previous_period"][metric_name] = record[metric_name]
+            actions_list = []
+            if "actions" in record:
+                actions_list = record["actions"]
+            actions_dict = actions_dictionary(actions_list)
             dataset[ad_account_id]["previous_period"]["reach"] += int(record["reach"])
             dataset[ad_account_id]["previous_period"]["impressions"] += int(record["impressions"])
             dataset[ad_account_id]["previous_period"]["spend"] += float(record["spend"])
+            dataset[ad_account_id]["events_responses"] += actions_dict["rsvp"]
+            dataset[ad_account_id]["post_engagements"] += actions_dict["post_engagement"]
+            dataset[ad_account_id]["messaging_conversations_started"] += actions_dict["onsite_conversion.messaging_conversation_started_7d"]
+            dataset[ad_account_id]["link_clicks"] += actions_dict["link_click"]
         ref.update({
             "reach": dataset[ad_account_id]["previous_period"]["reach"],
             "impressions": dataset[ad_account_id]["previous_period"]["impressions"],
             "spend": dataset[ad_account_id]["previous_period"]["spend"],
+            "events_responses": dataset[ad_account_id]["events_responses"],
+            "post_engagements": dataset[ad_account_id]["post_engagements"],
+            "messaging_conversations_started": dataset[ad_account_id]["messaging_conversations_started"],
+            "link_clicks": dataset[ad_account_id]["link_clicks"],
             "date_start": dataset[ad_account_id]["previous_period"]["date_start"],
             "date_stop": dataset[ad_account_id]["previous_period"]["date_stop"]
         })
