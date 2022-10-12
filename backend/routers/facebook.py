@@ -70,10 +70,10 @@ def actions_dictionary(actions_list):
 #     return json.dumps(dataset)
 
 #ETL
-@router.put("/facebook/store/basic-ad-metrics/aggregated/{days}")
+@router.put("/facebook/store/ad-metrics/basic/aggregated/{days}")
 async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
-    if days < 0:
-        days = 30
+    if days <= 0:
+        days = 1
     if days > 550:
         days = 550
     FacebookAdsApi.init(access_token=access_token)
@@ -97,7 +97,7 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
     day = '{:02d}'.format(now.day)
     now_day_month_year = '{}-{}-{}'.format(year, month, day)
     
-    since = now - datetime.timedelta(days=days)
+    since = now - datetime.timedelta(days=days-1) #days-1 since days = 1 will be today and ytd
     year = '{:02d}'.format(since.year)
     month = '{:02d}'.format(since.month)
     day = '{:02d}'.format(since.day)
@@ -110,7 +110,7 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
     day = '{:02d}'.format(prev_now.day)
     prev_now_day_month_year = '{}-{}-{}'.format(year, month, day)
     
-    prev_since = prev_now - datetime.timedelta(days=days)
+    prev_since = prev_now - datetime.timedelta(days=days-1)
     year = '{:02d}'.format(prev_since.year)
     month = '{:02d}'.format(prev_since.month)
     day = '{:02d}'.format(prev_since.day)
@@ -131,12 +131,18 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
             "post_engagements": 0,
             "messaging_conversations_started": 0,
             "link_clicks": 0,
+            "avg_cost_per_ad_obj": 0,
             "date_start": since_day_month_year,
             "date_stop": now_day_month_year,
             "previous_period": {
                 "reach": 0,
                 "impressions": 0,
                 "spend": 0.00,
+                "events_responses": 0,
+                "post_engagements": 0,
+                "messaging_conversations_started": 0,
+                "link_clicks": 0,
+                "avg_cost_per_ad_obj": 0,
                 "date_start": prev_since_day_month_year,
                 "date_stop": prev_now_day_month_year,
             }
@@ -166,6 +172,11 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
             # for metric_name in record:
             #     #print(metric_name + ": " + record[metric_name])
             #     dataset[ad_account_id][metric_name] = record[metric_name]
+        if dataset[ad_account_id]["spend"] > 0:
+            dataset[ad_account_id]["avg_cost_per_ad_obj"] = (dataset[ad_account_id]["events_responses"] 
+            + dataset[ad_account_id]["post_engagements"]
+            + dataset[ad_account_id]["messaging_conversations_started"] 
+            + dataset[ad_account_id]["link_clicks"]) / dataset[ad_account_id]["spend"]
         ref.update({
             "reach": dataset[ad_account_id]["reach"],
             "impressions": dataset[ad_account_id]["impressions"],
@@ -175,7 +186,8 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
             "messaging_conversations_started": dataset[ad_account_id]["messaging_conversations_started"],
             "link_clicks": dataset[ad_account_id]["link_clicks"],
             "date_start": dataset[ad_account_id]["date_start"],
-            "date_stop": dataset[ad_account_id]["date_stop"]
+            "date_stop": dataset[ad_account_id]["date_stop"],
+            "avg_cost_per_ad_obj": dataset[ad_account_id]["avg_cost_per_ad_obj"]
         })
         
     #now to get and store previous period data.
@@ -204,27 +216,33 @@ async def updateAggregatedBasicAdMetricsByDays(days: int = 30):
             dataset[ad_account_id]["previous_period"]["reach"] += int(record["reach"])
             dataset[ad_account_id]["previous_period"]["impressions"] += int(record["impressions"])
             dataset[ad_account_id]["previous_period"]["spend"] += float(record["spend"])
-            dataset[ad_account_id]["events_responses"] += actions_dict["rsvp"]
-            dataset[ad_account_id]["post_engagements"] += actions_dict["post_engagement"]
-            dataset[ad_account_id]["messaging_conversations_started"] += actions_dict["onsite_conversion.messaging_conversation_started_7d"]
-            dataset[ad_account_id]["link_clicks"] += actions_dict["link_click"]
+            dataset[ad_account_id]["previous_period"]["events_responses"] += actions_dict["rsvp"]
+            dataset[ad_account_id]["previous_period"]["post_engagements"] += actions_dict["post_engagement"]
+            dataset[ad_account_id]["previous_period"]["messaging_conversations_started"] += actions_dict["onsite_conversion.messaging_conversation_started_7d"]
+            dataset[ad_account_id]["previous_period"]["link_clicks"] += actions_dict["link_click"]
+        if dataset[ad_account_id]["previous_period"]["spend"] > 0:
+            dataset[ad_account_id]["previous_period"]["avg_cost_per_ad_obj"] = (dataset[ad_account_id]["previous_period"]["events_responses"] 
+            + dataset[ad_account_id]["previous_period"]["post_engagements"]
+            + dataset[ad_account_id]["previous_period"]["messaging_conversations_started"] 
+            + dataset[ad_account_id]["previous_period"]["link_clicks"]) / dataset[ad_account_id]["previous_period"]["spend"]
         ref.update({
             "reach": dataset[ad_account_id]["previous_period"]["reach"],
             "impressions": dataset[ad_account_id]["previous_period"]["impressions"],
             "spend": dataset[ad_account_id]["previous_period"]["spend"],
-            "events_responses": dataset[ad_account_id]["events_responses"],
-            "post_engagements": dataset[ad_account_id]["post_engagements"],
-            "messaging_conversations_started": dataset[ad_account_id]["messaging_conversations_started"],
-            "link_clicks": dataset[ad_account_id]["link_clicks"],
+            "events_responses": dataset[ad_account_id]["previous_period"]["events_responses"],
+            "post_engagements": dataset[ad_account_id]["previous_period"]["post_engagements"],
+            "messaging_conversations_started": dataset[ad_account_id]["previous_period"]["messaging_conversations_started"],
+            "link_clicks": dataset[ad_account_id]["previous_period"]["link_clicks"],
             "date_start": dataset[ad_account_id]["previous_period"]["date_start"],
-            "date_stop": dataset[ad_account_id]["previous_period"]["date_stop"]
+            "date_stop": dataset[ad_account_id]["previous_period"]["date_stop"],
+            "avg_cost_per_ad_obj": dataset[ad_account_id]["previous_period"]["avg_cost_per_ad_obj"]
         })
     return json.dumps(dataset)
 
 #reading from db
-@router.get("/facebook/basic-ad-metrics/aggregated/{days}")
+@router.get("/facebook/ad-metrics/basic/aggregated/{days}")
 async def getAggregatedBasicAdMetrics(days: int = 30):
-    if days < 0:
+    if days <= 0:
         days = 1
     if days > 1110:
         days = 1110
@@ -239,11 +257,11 @@ async def getAggregatedBasicAdMetrics(days: int = 30):
    
    
 #ETL
-@router.put("/facebook/store/basic-ad-metrics/daily/{days}") 
+@router.put("/facebook/store/ad-metrics/basic/daily/{days}") 
 #max days is 1110
 #"message": "(#3018) The start date of the time range cannot be beyond 37 months from the current date",
 async def updateDailyBasicAdMetrics(days: int = 30):
-    if days < 0:
+    if days <= 0:
         days = 1
     if days > 1110:
         days = 1110
@@ -254,10 +272,6 @@ async def updateDailyBasicAdMetrics(days: int = 30):
         'impressions',
         'spend',
         'actions',
-        # 'quality_score_ecvr',
-        # 'quality_score_ectr',
-        # 'actions:page_engagement',
-        # 'actions:like',
     ]
     
     now = datetime.datetime.now()
@@ -266,7 +280,7 @@ async def updateDailyBasicAdMetrics(days: int = 30):
     day = '{:02d}'.format(now.day)
     now_day_month_year = '{}-{}-{}'.format(year, month, day)
     
-    since = now - datetime.timedelta(days=days)
+    since = now - datetime.timedelta(days=days-1)
     year = '{:02d}'.format(since.year)
     month = '{:02d}'.format(since.month)
     day = '{:02d}'.format(since.day)
@@ -292,6 +306,7 @@ async def updateDailyBasicAdMetrics(days: int = 30):
                 "post_engagements": 0,
                 "messaging_conversations_started": 0,
                 "link_clicks": 0,
+                "avg_cost_per_ad_obj": 0,
                 "date_start": curr_date,
                 "date_stop": curr_date
             }
@@ -315,15 +330,11 @@ async def updateDailyBasicAdMetrics(days: int = 30):
             dataset[ad_account_id][record["date_stop"]]["post_engagements"] += actions_dict["post_engagement"]
             dataset[ad_account_id][record["date_stop"]]["messaging_conversations_started"] += actions_dict["onsite_conversion.messaging_conversation_started_7d"]
             dataset[ad_account_id][record["date_stop"]]["link_clicks"] += actions_dict["link_click"]
-            # dataset[ad_account_id][record["date_stop"]]["date_start"] = record["date_start"]
-            # dataset[ad_account_id][record["date_stop"]]["date_stop"] = record["date_stop"]
-            # dataset[ad_account_id][record["date_stop"]] = {
-            #     "reach": record["reach"],
-            #     "impressions": record["impressions"],
-            #     "spend": record["spend"],
-            #     "date_start": record["date_start"],
-            #     "date_stop": record["date_stop"]
-            # }
+            if dataset[ad_account_id][record["date_stop"]]["spend"] > 0:
+                dataset[ad_account_id][record["date_stop"]]["avg_cost_per_ad_obj"] = (dataset[ad_account_id][record["date_stop"]]["events_responses"] 
+                + dataset[ad_account_id][record["date_stop"]]["post_engagements"]
+                + dataset[ad_account_id][record["date_stop"]]["messaging_conversations_started"] 
+                + dataset[ad_account_id][record["date_stop"]]["link_clicks"]) / dataset[ad_account_id][record["date_stop"]]["spend"]
         for curr_date_key in dataset[ad_account_id]:
             ref.child(curr_date_key).update({
                 "reach": dataset[ad_account_id][curr_date_key]["reach"],
@@ -334,7 +345,8 @@ async def updateDailyBasicAdMetrics(days: int = 30):
                 "messaging_conversations_started": dataset[ad_account_id][curr_date_key]["messaging_conversations_started"],
                 "link_clicks": dataset[ad_account_id][curr_date_key]["link_clicks"],
                 "date_start": dataset[ad_account_id][curr_date_key]["date_start"],
-                "date_stop": dataset[ad_account_id][curr_date_key]["date_stop"]
+                "date_stop": dataset[ad_account_id][curr_date_key]["date_stop"],
+                "avg_cost_per_ad_obj": dataset[ad_account_id][curr_date_key]["avg_cost_per_ad_obj"]
             })
         #update last updated date
         ref.child("last_updated_date").update({
@@ -344,7 +356,7 @@ async def updateDailyBasicAdMetrics(days: int = 30):
 
 
 #ETL the main daily call since we dont want to call all the way to history everytime we want the "latest" data since the last time we called it
-@router.put("/facebook/store/basic-ad-metrics/latest-daily/") 
+@router.put("/facebook/store/ad-metrics/basic/latest-daily/") 
 #max days is 1110
 #"message": "(#3018) The start date of the time range cannot be beyond 37 months from the current date",
 async def updateDailyBasicAdMetrics():
@@ -396,6 +408,7 @@ async def updateDailyBasicAdMetrics():
                 "post_engagements": 0,
                 "messaging_conversations_started": 0,
                 "link_clicks": 0,
+                "avg_cost_per_ad_obj": 0,
                 "date_start": curr_date,
                 "date_stop": curr_date
             }
@@ -418,6 +431,11 @@ async def updateDailyBasicAdMetrics():
             dataset[ad_account_id][record["date_stop"]]["post_engagements"] += actions_dict["post_engagement"]
             dataset[ad_account_id][record["date_stop"]]["messaging_conversations_started"] += actions_dict["onsite_conversion.messaging_conversation_started_7d"]
             dataset[ad_account_id][record["date_stop"]]["link_clicks"] += actions_dict["link_click"]
+            if dataset[ad_account_id][record["date_stop"]]["spend"] > 0:
+                dataset[ad_account_id][record["date_stop"]]["avg_cost_per_ad_obj"] = (dataset[ad_account_id][record["date_stop"]]["events_responses"] 
+                + dataset[ad_account_id][record["date_stop"]]["post_engagements"]
+                + dataset[ad_account_id][record["date_stop"]]["messaging_conversations_started"] 
+                + dataset[ad_account_id][record["date_stop"]]["link_clicks"]) / dataset[ad_account_id][record["date_stop"]]["spend"]
         for curr_date_key in dataset[ad_account_id]:
             ref.child(curr_date_key).update({
                 "reach": dataset[ad_account_id][curr_date_key]["reach"],
@@ -428,7 +446,8 @@ async def updateDailyBasicAdMetrics():
                 "messaging_conversations_started": dataset[ad_account_id][curr_date_key]["messaging_conversations_started"],
                 "link_clicks": dataset[ad_account_id][curr_date_key]["link_clicks"],
                 "date_start": dataset[ad_account_id][curr_date_key]["date_start"],
-                "date_stop": dataset[ad_account_id][curr_date_key]["date_stop"]
+                "date_stop": dataset[ad_account_id][curr_date_key]["date_stop"],
+                "avg_cost_per_ad_obj": dataset[ad_account_id][curr_date_key]["avg_cost_per_ad_obj"]
             })
         #update last updated date
         ref.child("last_updated_date").update({
@@ -437,7 +456,7 @@ async def updateDailyBasicAdMetrics():
     return json.dumps(dataset) 
 
 #reading from db
-@router.get("/facebook/basic-ad-metrics/daily/{days}")
+@router.get("/facebook/ad-metrics/basic/daily/{days}")
 async def getDailyBasicAdMetrics(days: int = 30):
     try:
         if days < 0:
@@ -445,7 +464,7 @@ async def getDailyBasicAdMetrics(days: int = 30):
         if days > 1110:
             days = 1110
         now = datetime.datetime.now()
-        since = now - datetime.timedelta(days=days)
+        since = now - datetime.timedelta(days=days-1) #days-1 since if we want 1 day then its just today's data
         dataset = {}
         for ad_account_id in ad_account_ids:
             dataset[ad_account_id] = {}
