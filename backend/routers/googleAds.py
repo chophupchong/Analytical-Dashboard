@@ -73,6 +73,7 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
             prevPeriodStartDate = (datetime.today() + relativedelta(days=- 2 * days)
                         ).strftime('%Y-%m-%d')
             prevPeriodEndDate = startDate
+
             aggregatedBasicAdMetrics = f"""
                     SELECT  
                         campaign.name,
@@ -105,8 +106,22 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
                         metrics.interactions, 
                         metrics.average_cpm,
                         segments.hour
-                        FROM campaign  WHERE segments.date BETWEEN '{startDate}' AND '{endDate}'"""
+                        FROM campaign WHERE segments.date BETWEEN '{startDate}' AND '{endDate}'"""
+
+            aggregateWeeklyAndHourlyBasicAdMetrics = f"""
+                    SELECT  
+                        campaign.name,
+                        metrics.impressions, 
+                        metrics.ctr, 
+                        metrics.clicks,
+                        metrics.engagements, 
+                        metrics.interactions, 
+                        metrics.average_cpm,
+                        segments.day_of_week,
+                        segments.hour
+                        FROM campaign WHERE segments.date BETWEEN '{startDate}' AND '{endDate}'"""
             
+            #code to find respective account data from the same ad account.
             for word in accountNameEdited[token].split(" "):
                 if word =='Chop':
                     continue
@@ -114,6 +129,7 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
                     aggregatedBasicAdMetrics += f" AND campaign.name LIKE '%{word}%'"
                     prevPeriodAggregatedBasicAdMetrics += f" AND campaign.name LIKE '%{word}%'"
                     aggregateHourlyBasicAdMetrics += f" AND campaign.name LIKE '%{word}%'"
+                    aggregateWeeklyAndHourlyBasicAdMetrics += f" AND campaign.name LIKE '%{word}%'"
 
             search_request = client.get_type("SearchGoogleAdsRequest")
             search_request.customer_id = clientCustomerId
@@ -152,8 +168,6 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
             prev_period_search_request.query = prevPeriodAggregatedBasicAdMetrics
             prev_period_results = ga_service.search(request=prev_period_search_request)
 
-            
-
             for row in prev_period_results:
                 prevPeriodDataset['impressions'] += row.metrics.impressions
                 prevPeriodDataset['ctr'] += row.metrics.ctr
@@ -161,6 +175,7 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
                 prevPeriodDataset['engagements'] += row.metrics.engagements
                 prevPeriodDataset['interactions'] += row.metrics.interactions
                 prevPeriodDataset['spend'] += (row.metrics.average_cpm /1000000) * (row.metrics.impressions / 1000)
+
 
             #code to get aggregated hourly metrics 
             hourly_search_request = client.get_type("SearchGoogleAdsRequest")
@@ -186,8 +201,39 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
                 hourlyDataset[row.segments.hour]['ctr'] += row.metrics.ctr
                 hourlyDataset[row.segments.hour]['clicks'] += row.metrics.clicks
                 hourlyDataset[row.segments.hour]['interactions'] += row.metrics.interactions
-               
+            
 
+            #code to get aggregated weekly & hourly metrics 
+            weekly_search_request = client.get_type("SearchGoogleAdsRequest")
+            weekly_search_request.customer_id = clientCustomerId
+            weekly_search_request.query = aggregateWeeklyAndHourlyBasicAdMetrics
+            weekly_results = ga_service.search(request=weekly_search_request)
+            week = {2: "Monday", 3: "Tuesday", 4: "Wednesday", 5: "Thursday", 6:"Friday", 7:"Saturday", 8:"Sunday"}
+            weeklyDataset = {}
+
+            for day in week.values():
+                if day not in weeklyDataset:
+                    weeklyDataset[day] = {}
+                for hour in range(0,24):
+                    if hour not in weeklyDataset:
+                        weeklyDataset[day][hour] = {
+                            'impressions': 0,
+                            'spend': 0,
+                            'engagements': 0,
+                            'ctr': 0,
+                            'clicks': 0,
+                            'interactions': 0
+                            }
+
+            for row in weekly_results:
+                weeklyDataset[week[row.segments.day_of_week]][row.segments.hour]['impressions'] += row.metrics.impressions
+                weeklyDataset[week[row.segments.day_of_week]][row.segments.hour]['spend'] +=  (row.metrics.average_cpm /1000000) * (row.metrics.impressions / 1000)
+                weeklyDataset[week[row.segments.day_of_week]][row.segments.hour]['engagements'] += row.metrics.engagements
+                weeklyDataset[week[row.segments.day_of_week]][row.segments.hour]['ctr'] += row.metrics.ctr
+                weeklyDataset[week[row.segments.day_of_week]][row.segments.hour]['clicks'] += row.metrics.clicks
+                weeklyDataset[week[row.segments.day_of_week]][row.segments.hour]['interactions'] += row.metrics.interactions
+            
+               
             ref = db.reference(f"/youtube/{accountNames[token]}/basic-ad-metrics/aggregated/{days}")
             #store aggregated basic ad metrics
             ref.set(dataset)
@@ -216,7 +262,11 @@ def storeAggregatedBasicAdMetricsByDay(days: int):
             #store aggregated hourly ad metrics 
             ref.child("hourly").update(hourlyDataset)
 
-        return hourlyDataset
+            #store aggregated weekly-hourly ad metrics
+            ref.child("weeklyHourly").update(weeklyDataset)
+
+
+        return weeklyDataset
 
     except Exception as err:
         raise err
