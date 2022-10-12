@@ -253,11 +253,11 @@ async def updateDailyBasicAdMetrics(days: int = 30):
         'reach',
         'impressions',
         'spend',
+        'actions',
         # 'quality_score_ecvr',
         # 'quality_score_ectr',
         # 'actions:page_engagement',
         # 'actions:like',
-        #'actions', #most of the info is here
     ]
     
     now = datetime.datetime.now()
@@ -288,6 +288,10 @@ async def updateDailyBasicAdMetrics(days: int = 30):
                 "reach": 0,
                 "impressions": 0,
                 "spend": 0.00,
+                "events_responses": 0,
+                "post_engagements": 0,
+                "messaging_conversations_started": 0,
+                "link_clicks": 0,
                 "date_start": curr_date,
                 "date_stop": curr_date
             }
@@ -300,11 +304,17 @@ async def updateDailyBasicAdMetrics(days: int = 30):
         for record in result:
             if (record['publisher_platform'] == "instagram"):
                 continue
-            #print(record)
-            #print(record["date_stop"])
+            actions_list = []
+            if "actions" in record:
+                actions_list = record["actions"]
+            actions_dict = actions_dictionary(actions_list)
             dataset[ad_account_id][record["date_stop"]]["reach"] += int(record["reach"])
             dataset[ad_account_id][record["date_stop"]]["impressions"] += int(record["impressions"])
             dataset[ad_account_id][record["date_stop"]]["spend"] += float(record["spend"])
+            dataset[ad_account_id][record["date_stop"]]["events_responses"] += actions_dict["rsvp"]
+            dataset[ad_account_id][record["date_stop"]]["post_engagements"] += actions_dict["post_engagement"]
+            dataset[ad_account_id][record["date_stop"]]["messaging_conversations_started"] += actions_dict["onsite_conversion.messaging_conversation_started_7d"]
+            dataset[ad_account_id][record["date_stop"]]["link_clicks"] += actions_dict["link_click"]
             # dataset[ad_account_id][record["date_stop"]]["date_start"] = record["date_start"]
             # dataset[ad_account_id][record["date_stop"]]["date_stop"] = record["date_stop"]
             # dataset[ad_account_id][record["date_stop"]] = {
@@ -319,6 +329,10 @@ async def updateDailyBasicAdMetrics(days: int = 30):
                 "reach": dataset[ad_account_id][curr_date_key]["reach"],
                 "impressions": dataset[ad_account_id][curr_date_key]["impressions"],
                 "spend": dataset[ad_account_id][curr_date_key]["spend"],
+                "events_responses": dataset[ad_account_id][curr_date_key]["events_responses"],
+                "post_engagements": dataset[ad_account_id][curr_date_key]["post_engagements"],
+                "messaging_conversations_started": dataset[ad_account_id][curr_date_key]["messaging_conversations_started"],
+                "link_clicks": dataset[ad_account_id][curr_date_key]["link_clicks"],
                 "date_start": dataset[ad_account_id][curr_date_key]["date_start"],
                 "date_stop": dataset[ad_account_id][curr_date_key]["date_stop"]
             })
@@ -341,11 +355,7 @@ async def updateDailyBasicAdMetrics():
         'reach',
         'impressions',
         'spend',
-        # 'quality_score_ecvr',
-        # 'quality_score_ectr',
-        # 'actions:page_engagement',
-        # 'actions:like',
-        #'actions', #most of the info is here
+        'actions',
     ]
     
     now = datetime.datetime.now()
@@ -382,6 +392,10 @@ async def updateDailyBasicAdMetrics():
                 "reach": 0,
                 "impressions": 0,
                 "spend": 0.00,
+                "events_responses": 0,
+                "post_engagements": 0,
+                "messaging_conversations_started": 0,
+                "link_clicks": 0,
                 "date_start": curr_date,
                 "date_stop": curr_date
             }
@@ -390,29 +404,29 @@ async def updateDailyBasicAdMetrics():
             fields=fields,
             params=params,
         )
-        #print(result)
         for record in result:
             if (record['publisher_platform'] == "instagram"):
                 continue
-            #print(record)
-            #print(record["date_stop"])
+            actions_list = []
+            if "actions" in record:
+                actions_list = record["actions"]
+            actions_dict = actions_dictionary(actions_list)
             dataset[ad_account_id][record["date_stop"]]["reach"] += int(record["reach"])
             dataset[ad_account_id][record["date_stop"]]["impressions"] += int(record["impressions"])
             dataset[ad_account_id][record["date_stop"]]["spend"] += float(record["spend"])
-            # dataset[ad_account_id][record["date_stop"]]["date_start"] = record["date_start"]
-            # dataset[ad_account_id][record["date_stop"]]["date_stop"] = record["date_stop"]
-            # dataset[ad_account_id][record["date_stop"]] = {
-            #     "reach": record["reach"],
-            #     "impressions": record["impressions"],
-            #     "spend": record["spend"],
-            #     "date_start": record["date_start"],
-            #     "date_stop": record["date_stop"]
-            # }
+            dataset[ad_account_id][record["date_stop"]]["events_responses"] += actions_dict["rsvp"]
+            dataset[ad_account_id][record["date_stop"]]["post_engagements"] += actions_dict["post_engagement"]
+            dataset[ad_account_id][record["date_stop"]]["messaging_conversations_started"] += actions_dict["onsite_conversion.messaging_conversation_started_7d"]
+            dataset[ad_account_id][record["date_stop"]]["link_clicks"] += actions_dict["link_click"]
         for curr_date_key in dataset[ad_account_id]:
             ref.child(curr_date_key).update({
                 "reach": dataset[ad_account_id][curr_date_key]["reach"],
                 "impressions": dataset[ad_account_id][curr_date_key]["impressions"],
                 "spend": dataset[ad_account_id][curr_date_key]["spend"],
+                "events_responses": dataset[ad_account_id][curr_date_key]["events_responses"],
+                "post_engagements": dataset[ad_account_id][curr_date_key]["post_engagements"],
+                "messaging_conversations_started": dataset[ad_account_id][curr_date_key]["messaging_conversations_started"],
+                "link_clicks": dataset[ad_account_id][curr_date_key]["link_clicks"],
                 "date_start": dataset[ad_account_id][curr_date_key]["date_start"],
                 "date_stop": dataset[ad_account_id][curr_date_key]["date_stop"]
             })
