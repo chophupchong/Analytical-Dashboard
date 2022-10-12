@@ -15,7 +15,7 @@ ref = db.reference("/facebook")
 f = open('./facebookAccessTokens.json')
 data = json.load(f)
 access_token = data["access_token"]
-ad_account_ids = data["ad_account_ids"].split(" ")
+#ad_account_ids = data["ad_account_ids"].split(" ")
 app_secret = data["app_secret"]
 app_id = data["app_id"]
 
