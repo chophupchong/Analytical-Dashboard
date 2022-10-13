@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const youtubeApi = 'http://localhost:8000/youtube/';
+// const youtubeApi = 'http://localhost:8000/youtube/';
+const youtubeApi = 'https://chc-api.onrender.com';
 
 const youtubeService = () => {
   const postStoreBasicMetrics = async (months) => {
@@ -27,7 +28,7 @@ const youtubeService = () => {
   return {
     postStoreBasicMetrics,
     getBasicMetrics,
-    getAggregatedBasicMetrics
+    getAggregatedBasicMetrics,
   };
 };
 
