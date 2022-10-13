@@ -36,6 +36,8 @@ clientSecret = tokenData['client_secret']
 scope = tokenData['scopes']
 
 # helper methods
+
+
 def daterange(start_date, end_date):
     for n in range(int((end_date - start_date).days)):
         yield start_date + timedelta(n)
@@ -79,25 +81,25 @@ async def storeAggregatedBasicMetricsByDay(days: int):
         # Temporary import of tokens to backend
         for token in range(len(accessTokens)):
             credentials = google.oauth2.credentials.Credentials(token=accessTokens[token],
-                                                    refresh_token=refreshTokens[token],
-                                                    token_uri=tokenURI,
-                                                    client_id=clientID,
-                                                    client_secret=clientSecret,
-                                                    scopes=scope,
-                                                    )
+                                                                refresh_token=refreshTokens[token],
+                                                                token_uri=tokenURI,
+                                                                client_id=clientID,
+                                                                client_secret=clientSecret,
+                                                                scopes=scope,
+                                                                )
 
             youtubeAnalytics = googleapiclient.discovery.build(
-            'youtubeAnalytics', 'v2', credentials=credentials)
+                'youtubeAnalytics', 'v2', credentials=credentials)
 
             youtube = googleapiclient.discovery.build(
-            'youtube', 'v3', credentials=credentials)
+                'youtube', 'v3', credentials=credentials)
             endDate = datetime.today().strftime('%Y-%m-%d')
             startDate = (datetime.today() + relativedelta(days=-days)
-                     ).strftime('%Y-%m-%d')
+                         ).strftime('%Y-%m-%d')
 
             prevPeriodEndDate = startDate
             prevPeriodStartDate = (datetime.today() + relativedelta(days=-days * 2)
-                               ).strftime('%Y-%m-%d')
+                                   ).strftime('%Y-%m-%d')
         # gets aggregated data
             aggregatedDataResponse = execute_api_request(
                 youtubeAnalytics.reports().query,
@@ -125,7 +127,8 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                 mine=True
             )
 
-            ref = db.reference(f"/youtube/{accountNames[token]}/basic-metrics/aggregated/{days}")
+            ref = db.reference(
+                f"/youtube/{accountNames[token]}/basic-metrics/aggregated/{days}")
             aggregatedData = {}
             prevPeriodAggregatedData = {}
             # print(response['rows'][0][0])
@@ -228,13 +231,13 @@ async def storeAggregatedBasicMetricsByDay(days: int):
                 "dislikesPercentChange": ((aggregatedData['dislikes'] - prevPeriodAggregatedData['dislikes']) / aggregatedData['dislikes']) * 100,
                 "sharesPercentChange": ((aggregatedData['shares'] - prevPeriodAggregatedData['shares']) / aggregatedData['shares']) * 100,
                 "estimatedMinutesWatchedPercentChange": ((aggregatedData['estimatedMinutesWatched'] - prevPeriodAggregatedData['estimatedMinutesWatched'])
-                                                     / aggregatedData['estimatedMinutesWatched']) * 100,
+                                                         / aggregatedData['estimatedMinutesWatched']) * 100,
                 "averageViewDurationPercentChange": ((aggregatedData['averageViewDuration'] - prevPeriodAggregatedData['averageViewDuration'])
-                                                 / aggregatedData['averageViewDuration']) * 100,
+                                                     / aggregatedData['averageViewDuration']) * 100,
                 "engagementPercentChange": ((aggregatedData['engagement'] - prevPeriodAggregatedData['engagement'])
-                                        / aggregatedData['engagement']) * 100,
+                                            / aggregatedData['engagement']) * 100,
                 "subscriberPercentChange": ((aggregatedData['netSubscriberChange'] - prevPeriodAggregatedData['netSubscriberChange'])
-                                       / aggregatedData['netSubscriberChange']) * 100
+                                            / aggregatedData['netSubscriberChange']) * 100
             })
 
             responseChannelAudienceMetrics = execute_api_request(
@@ -269,20 +272,20 @@ async def storeDailyBasicMetrics(days: int):
     try:
         for token in range(len(accessTokens)):
             credentials = google.oauth2.credentials.Credentials(token=accessTokens[token],
-                                                    refresh_token=refreshTokens[token],
-                                                    token_uri=tokenURI,
-                                                    client_id=clientID,
-                                                    client_secret=clientSecret,
-                                                    scopes=scope,
-                                                    )
+                                                                refresh_token=refreshTokens[token],
+                                                                token_uri=tokenURI,
+                                                                client_id=clientID,
+                                                                client_secret=clientSecret,
+                                                                scopes=scope,
+                                                                )
             youtubeAnalytics = googleapiclient.discovery.build(
-            'youtubeAnalytics', 'v2', credentials=credentials)
+                'youtubeAnalytics', 'v2', credentials=credentials)
 
             youtube = googleapiclient.discovery.build(
-            'youtube', 'v3', credentials=credentials)
+                'youtube', 'v3', credentials=credentials)
             endDate = datetime.today().strftime('%Y-%m-%d')
             startDate = (datetime.today() + relativedelta(days=-days)
-                        ).strftime('%Y-%m-%d')
+                         ).strftime('%Y-%m-%d')
 
             responseDay = execute_api_request(
                 youtubeAnalytics.reports().query,
@@ -301,7 +304,8 @@ async def storeDailyBasicMetrics(days: int):
                 mine=True
             )
 
-            ref = db.reference(f"/youtube/{accountNames[token]}/basic-metrics/daily")
+            ref = db.reference(
+                f"/youtube/{accountNames[token]}/basic-metrics/daily")
 
             currSubscribers = int(
                 youtubeDataResponse['items'][0]['statistics']['subscriberCount'])
@@ -325,19 +329,21 @@ async def storeDailyBasicMetrics(days: int):
     except Exception as err:
         raise err
 
-#may delete
+# may delete
+
+
 @router.put("/youtube/store-basic-metrics/total", tags=["youtube"])
 async def storeTotalBasicMetrics():
     """ Storing latest basic channel metrics """
     try:
         for token in range(len(accessTokens)):
             credentials = google.oauth2.credentials.Credentials(token=accessTokens[token],
-                                                    refresh_token=refreshTokens[token],
-                                                    token_uri=tokenURI,
-                                                    client_id=clientID,
-                                                    client_secret=clientSecret,
-                                                    scopes=scope,
-                                                    )
+                                                                refresh_token=refreshTokens[token],
+                                                                token_uri=tokenURI,
+                                                                client_id=clientID,
+                                                                client_secret=clientSecret,
+                                                                scopes=scope,
+                                                                )
             youtubeAnalytics = googleapiclient.discovery.build(
                 'youtubeAnalytics', 'v2', credentials=credentials)
 
@@ -360,7 +366,8 @@ async def storeTotalBasicMetrics():
                 mine=True
             )
 
-            ref = db.reference(f"/youtube/{accountNames[token]}/basic-metrics/total")
+            ref = db.reference(
+                f"/youtube/{accountNames[token]}/basic-metrics/total")
 
             # print(response['rows'][0][0])
             for i in responseChannel['rows']:
@@ -409,9 +416,10 @@ async def getAggregatedBasicMetrics(days: int):
     try:
         dataset = {}
         for token in range(len(accessTokens)):
-            ref = db.reference(f"/youtube/{accountNames[token]}/basic-metrics/aggregated/{days}")
+            ref = db.reference(
+                f"/youtube/{accountNames[token]}/basic-metrics/aggregated/{days}")
             dataset[accountNames[token]] = ref.get()
-        
+
         return dataset
     except Exception as err:
         raise err
@@ -427,7 +435,8 @@ async def getDailyBasicMetrics(days: int = 30):
         dataset = {}
         for token in range(len(accessTokens)):
             dataset[accountNames[token]] = {}
-            ref = db.reference(f"/youtube/{accountNames[token]}/basic-metrics/daily")
+            ref = db.reference(
+                f"/youtube/{accountNames[token]}/basic-metrics/daily")
             metrics = ref.get()
             for single_date in daterange(since, now):
                 curr_date = single_date.strftime("%Y-%m-%d")
