@@ -3,10 +3,6 @@ module.exports = defineConfig({
   transpileDependencies: true,
   lintOnSave: false,
   devServer: {
-    proxy: {
-      target: 'https://chc-api.onrender.com/',
-      changeOrigin: true,
-      secure: false,
-    },
+    proxy: 'https://chc-api.onrender.com/',
   },
 });

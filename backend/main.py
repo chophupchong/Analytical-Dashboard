@@ -7,11 +7,16 @@ from routers import meta
 from routers import googleAds
 from routers import youtube
 app = FastAPI()
+
+origins = [
+    "http://localhost:8080"
+]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080",
-                   "https://chc-api.onrender.com", "*"],
-    allow_credentials=True,
+    allow_origins=origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
